@@ -1,0 +1,112 @@
+﻿@page "/Login"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+@if (IsLogin.HasValue)
+{
+    <h3>@(IsLogin.Value? "Logout" : "Login") to server</h3>
+
+    @if (!IsLogin.Value)
+    {
+        <form>
+            <div class="form-group">
+                <label for="UserName">User Name</label>
+                <input type="text" class="form-control" id="UserName" @bind-value="@LoginModel.UserName">
+            </div>
+            <div class="form-group">
+                <label for="ServerPassword">Password</label>
+                <input type="password" class="form-control" id="ServerPassword" @bind-value="@LoginModel.Password">
+            </div>
+            <div class="form-group">
+                <label for="captchaNumber">
+                    Captcha
+                    <img class="img-fluid" style="height:2.1em;width:7em;margin-left:1em" src="@CaptchaUrl" id="captchaImage" @onclick="ChangeCaptcha"/>
+                </label>
+                <input type="text" name="captchaNumber" class="form-control" id="captchaNumber" @bind-value="@LoginModel.Captcha">
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="SaveLoginInfo" @bind-value="@LoginModel.Persist">
+                <label class="form-check-label" for="SaveLoginInfo">Save Login Info</label>
+            </div>
+            @if (LoginModel.Status != LoginStatus.Succesful)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @LoginModel.Status @LoginModel.Message
+                </div>
+            }
+            <button type="button" class="btn btn-primary" @onclick="@DoLogin">Login</button>
+        </form>
+
+    }
+    else
+    {
+        <form>
+            <button type="button" class="btn btn-primary" @onclick="@DoLogout">Log out</button>
+        </form>
+    }
+}
+
+@code{
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        bool.TryParse(await Http.GetStringAsync("/api/Login/IsLogin"), out var result);
+
+        IsLogin = result;
+    }
+
+    public ClientLoginModel LoginModel { get; set; } = new ClientLoginModel();
+    public bool OnLogin { get; set; }
+    public bool? IsLogin { get; set; }
+    public string CaptchaUrl { get; set; } = "api/Login/GenerateCaptcha";
+
+    async void DoLogin()
+    {
+        if (OnLogin)
+        {
+            return;
+        }
+
+        try
+        {
+            OnLogin = true;
+            LoginModel = await (await Http.PostAsJsonAsync("/api/Login/Login", LoginModel)).Content.ReadFromJsonAsync<ClientLoginModel>();
+
+            if (LoginModel.Status == LoginStatus.Succesful)
+            {
+                NavManager.NavigateTo("/Connected");
+            }
+            else
+            {
+                ChangeCaptcha();
+            }
+        }
+        catch (Exception ex)
+        {
+            LoginModel.Message = ex.Message;
+            LoginModel.Status = LoginStatus.Exception;
+        }
+        finally
+        {
+            OnLogin = false;
+        }
+
+        StateHasChanged();
+    }
+
+    void ChangeCaptcha()
+    {
+        CaptchaUrl = "api/Login/GenerateCaptcha?timestamp=" + DateTime.Now.Ticks;
+    }
+
+    async void DoLogout()
+    {
+        await Http.GetAsync("/api/Login/Logout");
+        bool.TryParse(await Http.GetStringAsync("/api/Login/IsLogin"), out var result);
+        IsLogin = result;
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30406.217
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Server", "WebSSH\Server\WebSSH.Server.csproj", "{2483C6DF-6FC3-4E15-9408-34C16F5712D0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Client", "WebSSH\Client\WebSSH.Client.csproj", "{458C5A64-9F4E-4DFA-90B9-8B5B79677057}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Shared", "WebSSH\Shared\WebSSH.Shared.csproj", "{92DE4F9F-F73A-485E-8B12-03537C00BA21}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F4072CDD-6930-4201-85DF-3E90F8082EFF}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Playground", "WebSSH.Playground\WebSSH.Playground.csproj", "{8331AC13-E11C-4D4C-8358-078CB2DE88E9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2483C6DF-6FC3-4E15-9408-34C16F5712D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2483C6DF-6FC3-4E15-9408-34C16F5712D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2483C6DF-6FC3-4E15-9408-34C16F5712D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2483C6DF-6FC3-4E15-9408-34C16F5712D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{458C5A64-9F4E-4DFA-90B9-8B5B79677057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{458C5A64-9F4E-4DFA-90B9-8B5B79677057}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{458C5A64-9F4E-4DFA-90B9-8B5B79677057}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{458C5A64-9F4E-4DFA-90B9-8B5B79677057}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92DE4F9F-F73A-485E-8B12-03537C00BA21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92DE4F9F-F73A-485E-8B12-03537C00BA21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92DE4F9F-F73A-485E-8B12-03537C00BA21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92DE4F9F-F73A-485E-8B12-03537C00BA21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {56CF01D2-9114-40A8-B4AD-3C2925B0B6EC}
+	EndGlobalSection
+EndGlobal

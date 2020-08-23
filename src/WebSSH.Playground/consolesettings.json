@@ -1,0 +1,8 @@
+{
+  "DefaultSSHForTest": {
+    "Host": "",
+    "Port": 22,
+    "UserName": "",
+    "Password": ""
+  }
+}

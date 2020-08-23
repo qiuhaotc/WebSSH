@@ -1,0 +1,194 @@
+﻿@page "/Shell/{UniqueId:guid}"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime;
+
+<h3>Shell</h3>
+
+<div>
+    <div class="form-group">
+        <label for="CommandText">Shell Output</label>
+        <textarea class="form-control" id="ShellOutput" style="height:26em" readonly>@ResultString</textarea>
+    </div>
+    <div class="form-group">
+        <label for="CommandText">Command</label>
+        <input type="text" class="form-control" id="CommandText" @onkeydown="@OnCommandKeydown" @bind-value="@Command" @bind-value:event="oninput">
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="@RunCommand">Run Command</button>
+    <button type="button" class="btn btn-danger" @onclick="@Clear">Clear</button>
+</div>
+
+@code{
+
+    [Parameter]
+    public Guid UniqueId { get; set; }
+
+    string resultString = string.Empty;
+
+    static Task task;
+    static System.Threading.CancellationTokenSource cancellationTokenSource;
+    public string Command { get; set; } = string.Empty;
+    public string ResultString => StaticUtils.GetOutputString(UniqueId);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        ScrollToBottom();
+
+        if (firstRender)
+        {
+            try
+            {
+                cancellationTokenSource?.Cancel();
+                cancellationTokenSource?.Dispose();
+                cancellationTokenSource = null;
+
+                if (task != null)
+                {
+                    try
+                    {
+                        await task;
+
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Ignore
+                    }
+
+                    task.Dispose();
+                    task = null;
+                }
+
+                var isConnected = await Http.GetFromJsonAsync<ServerResponse<bool>>("/api/Shell/IsConnected?uniqueId=" + UniqueId);
+
+                if (isConnected.Response)
+                {
+                    cancellationTokenSource = new System.Threading.CancellationTokenSource();
+                    var token = cancellationTokenSource.Token;
+
+                    task = Task.Run(async () =>
+                    {
+                        while (true)
+                        {
+                            token.ThrowIfCancellationRequested();
+
+                            var needGetLinesRightNow = false;
+                            var response = await Http.GetFromJsonAsync<ServerResponse<ServerOutput>>("/api/Shell/GetShellOutput?uniqueId=" + UniqueId, token);
+                            if (response.StausResult == StausResult.Successful)
+                            {
+                                if (!string.IsNullOrEmpty(response.Response.Output))
+                                {
+                                    StaticUtils.AddOutputString(UniqueId, response.Response.Output);
+                                    StateHasChanged();
+
+                                    if (response.Response.Lines == Constants.MaxinumLines)
+                                    {
+                                        needGetLinesRightNow = true;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                StaticUtils.AddOutputString(UniqueId, Environment.NewLine + response.ExtraMessage);
+                                StateHasChanged();
+
+                                if (response.StausResult == StausResult.Exception)
+                                {
+                                    cancellationTokenSource.Cancel();
+                                }
+                            }
+
+                            if (needGetLinesRightNow)
+                            {
+                                await Task.Delay(1000, token);
+                            }
+                            else
+                            {
+                                await Task.Delay(2000, token);
+                            }
+                        }
+                    }, token);
+                }
+                else
+                {
+                    StaticUtils.AddOutputString(UniqueId, "Not conneted");
+                }
+            }
+            catch (Exception ex)
+            {
+                StaticUtils.AddOutputString(UniqueId, ex.Message);
+                StateHasChanged();
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    bool IsRunningCommand { get; set; }
+
+    async void RunCommand()
+    {
+        if (IsRunningCommand)
+        {
+            StaticUtils.AddOutputString(UniqueId, "Is running command, please wait for pre-command finished");
+            StateHasChanged();
+            return;
+        }
+
+        IsRunningCommand = true;
+
+        try
+        {
+            var content = await Http.GetAsync("/api/Shell/RunShellCommand?command=" + System.Web.HttpUtility.UrlEncode(Command) + "&uniqueId=" + UniqueId);
+            if (content.IsSuccessStatusCode)
+            {
+                var response = await content.Content.ReadFromJsonAsync<ServerResponse<bool>>();
+
+                if (response.StausResult == StausResult.Successful && response.Response)
+                {
+                    StaticUtils.AddOutputString(UniqueId, "Running Successful");
+                }
+                else
+                {
+                    StaticUtils.AddOutputString(UniqueId, response.ExtraMessage);
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("ShowNotLogin", "Not login");
+                NavManager.NavigateTo("/Login");
+            }
+        }
+        catch (Exception ex)
+        {
+            StaticUtils.AddOutputString(UniqueId, ex.Message);
+        }
+
+        IsRunningCommand = false;
+        Command = string.Empty;
+        StateHasChanged();
+    }
+
+    void Clear()
+    {
+        Command = string.Empty;
+        StaticUtils.ClearOutputString(UniqueId);
+    }
+
+    void OnCommandKeydown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            RunCommand();
+        }
+    }
+
+    async void ScrollToBottom()
+    {
+        await JSRuntime.InvokeVoidAsync("ScrollToBottom", "ShellOutput");
+    }
+}

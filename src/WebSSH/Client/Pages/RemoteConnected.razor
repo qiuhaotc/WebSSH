@@ -1,0 +1,80 @@
+﻿@page "/Connected"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+
+<h3>Connected to SSH - @ClientStoredSessionModel.DisplayName</h3>
+
+<div>
+    <div class="form-group">
+        <label for="RemoteHost">Remote Host Address</label>
+        <input type="text" class="form-control" autocomplete="off" id="RemoteHost" @bind-value="@ClientStoredSessionModel.Host">
+    </div>
+    <div class="form-group">
+        <label for="Port">Port</label>
+        <input type="number" class="form-control" autocomplete="off" id="Port" @bind-value="@ClientStoredSessionModel.Port">
+    </div>
+    <div class="form-group">
+        <label for="ServerUserName">User Name</label>
+        <input type="text" class="form-control" id="ServerUserName" autocomplete="off" @bind-value="@ClientStoredSessionModel.UserName">
+    </div>
+    <div class="form-group">
+        <label for="ServerPassword">Password</label>
+        <input type="password" class="form-control" id="ServerPassword" autocomplete="off" @bind-value="@ClientStoredSessionModel.PasswordDecryped">
+    </div>
+    @if (!string.IsNullOrEmpty(Status))
+    {
+        <div class="alert alert-danger" role="alert">
+            @Status
+        </div>
+    }
+    <button type="button" class="btn btn-primary" @onclick="Connected">Connected</button>
+</div>
+
+@code{
+
+    ClientStoredSessionModel clientStoredSessionModel = StaticUtils.ClientStoredSessionModel ?? new ClientStoredSessionModel { DisplayName = "Temporary Server" };
+
+    public ClientStoredSessionModel ClientStoredSessionModel => clientStoredSessionModel;
+
+    public string Status { get; set; }
+
+    async void Connected()
+    {
+        try
+        {
+            var activeSessionModel = new ActiveSessionModel
+            {
+                StoredSessionModel = ClientStoredSessionModel
+            };
+
+            var content = await Http.PostAsJsonAsync("/api/Shell/Connected", activeSessionModel);
+            if (content.IsSuccessStatusCode)
+            {
+                var result = await content.Content.ReadFromJsonAsync<ServerResponse<ActiveSessionModel>>();
+
+                if (result.StausResult == StausResult.Successful)
+                {
+                    StaticUtils.ClientStoredSessionModel = null;
+                    NavManager.NavigateTo("/Shell/" + result.Response.UniqueKey);
+                }
+                else
+                {
+                    Status = result.ExtraMessage;
+                }
+            }
+            else
+            {
+                Status = "Not login";
+                await JSRuntime.InvokeVoidAsync("ShowNotLogin", Status);
+                NavManager.NavigateTo("/Login");
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+
+        StateHasChanged();
+    }
+}
