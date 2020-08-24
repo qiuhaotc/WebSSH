@@ -20,7 +20,7 @@
     </div>
     <div class="form-group">
         <label for="ServerPassword">Password</label>
-        <input type="password" class="form-control" id="ServerPassword" autocomplete="off" @bind-value="@ClientStoredSessionModel.PasswordDecryped">
+        <input type="password" class="form-control" id="ServerPassword" autocomplete="new-password" @bind-value="@ClientStoredSessionModel.PasswordDecryped">
     </div>
     @if (!string.IsNullOrEmpty(Status))
     {
