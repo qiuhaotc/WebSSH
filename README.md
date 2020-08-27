@@ -16,7 +16,11 @@ Input the user name and password and captcha to login, user name and password co
 
 ### Connected To Server, Running Command
 
-![Connected To Server & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndDisconnected.gif)
+Press connected button, connected to remote server, running whatever command you want.
+
+Go to management page, will list all available connected servers.
+
+![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndRunningCommand.gif)
 
 ## Deployment Via Docker
 
