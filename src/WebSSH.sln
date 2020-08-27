@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Playground", "WebSSH.Playground\WebSSH.Playground.csproj", "{8331AC13-E11C-4D4C-8358-078CB2DE88E9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSSH.Test", "WebSSH.Test\WebSSH.Test.csproj", "{2D743F09-5A90-48FE-82FA-1636A4988C8D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8331AC13-E11C-4D4C-8358-078CB2DE88E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D743F09-5A90-48FE-82FA-1636A4988C8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D743F09-5A90-48FE-82FA-1636A4988C8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D743F09-5A90-48FE-82FA-1636A4988C8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D743F09-5A90-48FE-82FA-1636A4988C8D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

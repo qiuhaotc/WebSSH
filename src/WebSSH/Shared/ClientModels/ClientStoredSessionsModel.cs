@@ -23,7 +23,7 @@ namespace WebSSH.Shared
             }
         }
 
-        public void RemoveStoredSessions(Guid sessionKey)
+        public void RemoveStoredSession(Guid sessionKey)
         {
             var session = Sessions.FirstOrDefault(u => u.UniqueKey == sessionKey);
             if (session != null)
