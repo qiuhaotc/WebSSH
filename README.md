@@ -30,3 +30,14 @@ Running your server at port 8080, config the password "your_password" to your ow
 docker pull qiuhaotc/webssh
 docker run -d --name webssh -p 8080:80 ShellConfiguration__Users__0__Password="your_password" --restart=always qiuhaotc/webssh
 ```
+
+## Misc
+
+|Status|Value|
+|:----|:---:|
+|Stars|[![Stars](https://img.shields.io/github/stars/qiuhaotc/WebSSH)](https://github.com/qiuhaotc/WebSSH)
+|Forks|[![Forks](https://img.shields.io/github/forks/qiuhaotc/WebSSH)](https://github.com/qiuhaotc/WebSSH)
+|License|[![License](https://img.shields.io/github/license/qiuhaotc/WebSSH)](https://github.com/qiuhaotc/WebSSH)
+|Issues|[![Issues](https://img.shields.io/github/issues/qiuhaotc/WebSSH)](https://github.com/qiuhaotc/WebSSH)
+|Docker Pulls|[![Downloads](https://img.shields.io/docker/pulls/qiuhaotc/WebSSH.svg)](https://hub.docker.com/r/qiuhaotc/WebSSH)
+|Release Downloads|[![Downloads](https://img.shields.io/github/downloads/qiuhaotc/WebSSH/total.svg)](https://github.com/qiuhaotc/WebSSH/releases)
