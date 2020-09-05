@@ -9,7 +9,7 @@ namespace WebSSH.Shared
         public void AddOrUpdateStoredSessions(ClientStoredSessionModel session)
         {
             var exist = Sessions.FirstOrDefault(u => u.UniqueKey == session.UniqueKey);
-            if(exist != null)
+            if (exist != null)
             {
                 if (!session.Equals(exist))
                 {

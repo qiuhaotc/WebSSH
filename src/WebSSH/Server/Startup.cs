@@ -1,16 +1,13 @@
+using System;
+using System.Net;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Linq;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Threading.Tasks;
-using System.Net;
 using WebSSH.Shared;
-using System;
 
 namespace WebSSH.Server
 {
@@ -39,22 +36,22 @@ namespace WebSSH.Server
             services.AddControllersWithViews();
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
-               options.Events = new CookieAuthenticationEvents
-               {
-                   OnRedirectToLogin = ctx =>
-                   {
-                       if (ctx.Request.Path.StartsWithSegments("/api"))
-                       {
-                           ctx.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                       }
-                       else
-                       {
-                           ctx.Response.Redirect(ctx.RedirectUri);
-                       }
+                options.Events = new CookieAuthenticationEvents
+                {
+                    OnRedirectToLogin = ctx =>
+                    {
+                        if (ctx.Request.Path.StartsWithSegments("/api"))
+                        {
+                            ctx.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        }
+                        else
+                        {
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                        }
 
-                       return Task.FromResult(0);
-                   }
-               };
+                        return Task.FromResult(0);
+                    }
+                };
             });
 
             services.AddRazorPages();

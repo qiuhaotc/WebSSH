@@ -20,7 +20,7 @@
             <div class="form-group">
                 <label for="captchaNumber">
                     Captcha
-                    <img class="img-fluid" style="height:2.1em;width:7em;margin-left:1em" src="@CaptchaUrl" id="captchaImage" @onclick="ChangeCaptcha"/>
+                    <img class="img-fluid" style="height:2.1em;width:7em;margin-left:1em" src="@CaptchaUrl" id="captchaImage" @onclick="ChangeCaptcha" />
                 </label>
                 <input type="text" name="captchaNumber" class="form-control" id="captchaNumber" @bind-value="@LoginModel.Captcha">
             </div>

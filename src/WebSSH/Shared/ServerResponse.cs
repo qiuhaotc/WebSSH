@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace WebSSH.Shared
+﻿namespace WebSSH.Shared
 {
     public class ServerResponse<T>
     {

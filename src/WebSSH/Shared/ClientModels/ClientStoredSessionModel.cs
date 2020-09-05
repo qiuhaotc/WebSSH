@@ -14,6 +14,7 @@ namespace WebSSH.Shared
         public string Password { get; set; }
         public byte[] FingerPrint { get; set; }
         public byte[] LoginKey { get; set; }
+
         [JsonIgnore]
         public string PasswordDecryped
         {
