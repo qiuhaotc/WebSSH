@@ -18,7 +18,7 @@ namespace WebSSH.Client
             }
             else
             {
-                outputString += Environment.NewLine + message;
+                outputString += message;
                 OutputStrings[uniqueKey] = outputString;
             }
         }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Text;
 using Renci.SshNet;
+using Renci.SshNet.Common;
 using WebSSH.Shared;
 
 namespace WebSSH.Server
@@ -17,6 +19,7 @@ namespace WebSSH.Server
                 sshClient = new SshClient(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, clientStoredSessionModel.PasswordDecryped);
                 sshClient.Connect();
                 shellStream = sshClient.CreateShellStream("Terminal", 80, 30, 800, 400, 1000);
+                var outputQueue = new ConcurrentQueue<string>();
 
                 var sessionModel = new ServerActiveSessionModel
                 {
@@ -26,7 +29,28 @@ namespace WebSSH.Server
                     Client = sshClient,
                     StartSessionDate = DateTime.Now,
                     LastAccessSessionDate = DateTime.Now,
-                    StoredSessionModel = clientStoredSessionModel
+                    StoredSessionModel = clientStoredSessionModel,
+                    OutputQueue = outputQueue
+                };
+
+                string result = null;
+                while ((result = sessionModel.ShellStream.ReadLine(TimeSpan.FromSeconds(0.3))) != null)
+                {
+                    outputQueue.Enqueue(result + Environment.NewLine);
+                }
+
+                outputQueue.Enqueue(sessionModel.ShellStream.Read());
+
+                shellStream.DataReceived += (obj, e) =>
+                {
+                    try
+                    {
+                        outputQueue.Enqueue(Encoding.UTF8.GetString(e.Data));
+                    }
+                    catch (Exception ex)
+                    {
+                        outputQueue.Enqueue(ex.Message);
+                    }
                 };
 
                 AddActiveSession(sessionModel);
@@ -44,7 +68,7 @@ namespace WebSSH.Server
             }
         }
 
-        void SshClient_ErrorOccurred(object sender, Renci.SshNet.Common.ExceptionEventArgs e)
+        void SshClient_ErrorOccurred(object sender, ExceptionEventArgs e)
         {
             RemoveActiveSession((sender as ServerActiveSessionModel)?.UniqueKey ?? Guid.Empty);
         }

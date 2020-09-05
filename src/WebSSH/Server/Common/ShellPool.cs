@@ -70,15 +70,14 @@ namespace WebSSH.Server
             if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
             {
                 var totalLines = 0;
-                var output = new StringBuilder();
-                string result;
-                while (totalLines < Constants.MaxinumLines && (result = serverActiveSessionModel.ShellStream.ReadLine(TimeSpan.FromSeconds(1))) != null)
+                var outputStringBuilder = new StringBuilder();
+                while (totalLines < Constants.MaxinumLines && serverActiveSessionModel.OutputQueue.TryDequeue(out var output))
                 {
                     totalLines++;
-                    output.AppendLine(result);
+                    outputStringBuilder.Append(output);
                 }
 
-                return new ServerOutput { Output = output.ToString(), Lines = totalLines };
+                return new ServerOutput { Output = outputStringBuilder.ToString(), Lines = totalLines };
             }
             else
             {

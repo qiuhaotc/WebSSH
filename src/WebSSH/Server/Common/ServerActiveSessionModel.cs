@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using Renci.SshNet;
 using WebSSH.Shared;
 
@@ -13,6 +14,7 @@ namespace WebSSH.Server
         public DateTime LastAccessSessionDate { get; set; }
         public SshClient Client { get; set; }
         public ShellStream ShellStream { get; set; }
+        public ConcurrentQueue<string> OutputQueue { get; set; }
 
         public void Dispose()
         {

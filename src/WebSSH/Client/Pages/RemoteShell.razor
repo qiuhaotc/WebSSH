@@ -5,23 +5,41 @@
 
 <h3>Shell</h3>
 
-<div>
-    <div class="form-group">
+<div class="row">
+    <div class="form-group col-md-12">
         <label for="CommandText">Shell Output</label>
         <textarea class="form-control" id="ShellOutput" style="height:26em" readonly>@ResultString</textarea>
     </div>
-    <div class="form-group">
-        <label for="CommandText">Command</label>
-        <input type="text" class="form-control" id="CommandText" @onkeydown="@OnCommandKeydown" @bind-value="@Command" @bind-value:event="oninput">
+    <div class="form-group col-md-2">
+        <label for="CommandMode">Command Mode</label>
+        <select class="form-control" id="CommandMode" @bind="@CommandMode">
+            <option value="0">Single Line</option>
+            <option value="1">Multi Lines</option>
+        </select>
     </div>
-    <button type="button" class="btn btn-primary" @onclick="@RunCommand">Run Command</button>
-    <button type="button" class="btn btn-danger" @onclick="@Clear">Clear</button>
+    <div class="form-group  col-md-10">
+        <label for="CommandText">Command Content</label>
+        @if (CommandMode == 0)
+        {
+            <input type="text" class="form-control" autocomplete="off" id="CommandText" @onkeydown="@OnCommandKeydown" @bind-value="@Command" @bind-value:event="oninput">
+        }
+        else
+        {
+            <textarea id="CommandText" class="form-control" @bind="@Command" @bind:event="oninput"></textarea>
+        }
+    </div>
+    <div class="form-group  col-md-12">
+        <button type="button" class="btn btn-primary" @onclick="@RunCommand">Run Command</button>
+        <button type="button" class="btn btn-danger" @onclick="@Clear">Clear</button>
+    </div>
 </div>
 
 @code{
 
     [Parameter]
     public Guid UniqueId { get; set; }
+
+    public int CommandMode { get; set; }
 
     string resultString = string.Empty;
 
@@ -99,23 +117,23 @@
 
                             if (needGetLinesRightNow)
                             {
-                                await Task.Delay(1000, token);
+                                await Task.Delay(100, token);
                             }
                             else
                             {
-                                await Task.Delay(2000, token);
+                                await Task.Delay(1000, token);
                             }
                         }
                     }, token);
                 }
                 else
                 {
-                    StaticUtils.AddOutputString(UniqueId, "Not conneted");
+                    StaticUtils.AddOutputString(UniqueId, Environment.NewLine + "Not conneted");
                 }
             }
             catch (Exception ex)
             {
-                StaticUtils.AddOutputString(UniqueId, ex.Message);
+                StaticUtils.AddOutputString(UniqueId, Environment.NewLine + ex.Message);
                 StateHasChanged();
             }
         }
@@ -134,7 +152,7 @@
     {
         if (IsRunningCommand)
         {
-            StaticUtils.AddOutputString(UniqueId, "Is running command, please wait for pre-command finished");
+            StaticUtils.AddOutputString(UniqueId, Environment.NewLine + "Is running command, please wait for pre-command finished");
             StateHasChanged();
             return;
         }
@@ -148,13 +166,9 @@
             {
                 var response = await content.Content.ReadFromJsonAsync<ServerResponse<bool>>();
 
-                if (response.StausResult == StausResult.Successful && response.Response)
+                if (response.StausResult != StausResult.Successful || !response.Response)
                 {
-                    StaticUtils.AddOutputString(UniqueId, "Running Successful");
-                }
-                else
-                {
-                    StaticUtils.AddOutputString(UniqueId, response.ExtraMessage);
+                    StaticUtils.AddOutputString(UniqueId, Environment.NewLine + response.ExtraMessage);
                 }
             }
             else
@@ -165,7 +179,7 @@
         }
         catch (Exception ex)
         {
-            StaticUtils.AddOutputString(UniqueId, ex.Message);
+            StaticUtils.AddOutputString(UniqueId, Environment.NewLine + ex.Message);
         }
 
         IsRunningCommand = false;
