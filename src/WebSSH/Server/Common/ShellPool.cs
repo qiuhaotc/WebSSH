@@ -38,9 +38,12 @@ namespace WebSSH.Server
                     }
                 }
             });
+
+            ShellConfiguration = shellConfiguration;
         }
 
         static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new ConcurrentDictionary<string, ServerActiveSessionsModel>();
+        public ShellConfiguration ShellConfiguration { get; }
 
         public void AddShellToPool(string sessionId, ActiveSessionModel activeSessionModel)
         {
@@ -50,7 +53,7 @@ namespace WebSSH.Server
                 ShellPoolDictionary.TryAdd(sessionId, sessionsModel);
             }
 
-            sessionsModel.Connected(activeSessionModel);
+            sessionsModel.Connected(activeSessionModel, ShellConfiguration);
         }
 
         public void RunShellCommand(string sessionId, Guid uniqueId, string command)

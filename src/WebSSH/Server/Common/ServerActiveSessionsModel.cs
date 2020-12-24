@@ -9,14 +9,16 @@ namespace WebSSH.Server
 {
     public class ServerActiveSessionsModel
     {
-        public ServerActiveSessionModel Connected(ActiveSessionModel activeSessionModel)
+        public ServerActiveSessionModel Connected(ActiveSessionModel activeSessionModel, ShellConfiguration shellConfiguration)
         {
             SshClient sshClient = null;
             ShellStream shellStream = null;
             try
             {
+                var timeOutMinutes = shellConfiguration.MaxIdleMinutes < 1 ? 1 : shellConfiguration.MaxIdleMinutes > 20 ? 20 : shellConfiguration.MaxIdleMinutes;
                 var clientStoredSessionModel = activeSessionModel.StoredSessionModel;
                 sshClient = new SshClient(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, clientStoredSessionModel.PasswordDecryped);
+                sshClient.ConnectionInfo.Timeout = TimeSpan.FromMinutes(timeOutMinutes);
                 sshClient.Connect();
                 shellStream = sshClient.CreateShellStream("Terminal", 80, 30, 800, 400, 1000);
                 var outputQueue = new ConcurrentQueue<string>();
