@@ -1,0 +1,81 @@
+﻿@page "/Test"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime;
+
+<h3>Shell</h3>
+
+<div class="row">
+    <div class="col-md-12">
+        <div id="ShellOutput"></div>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="CommandMode">Command Mode</label>
+        <select class="form-control" id="CommandMode" @bind="@CommandMode">
+            <option value="0">Single Line</option>
+            <option value="1">Multi Lines</option>
+        </select>
+    </div>
+    <div class="form-group  col-md-10">
+        <label for="CommandText">Command Content</label>
+        @if (CommandMode == 0)
+        {
+            <input type="text" class="form-control" autocomplete="off" id="CommandText" @onkeydown="@OnCommandKeydown" @bind-value="@Command" @bind-value:event="oninput">
+        }
+        else
+        {
+            <textarea id="CommandText" class="form-control" @bind="@Command" @bind:event="oninput"></textarea>
+        }
+    </div>
+    <div class="form-group  col-md-12">
+        <button type="button" class="btn btn-primary" @onclick="@RunCommand">Run Command</button>
+        <button type="button" class="btn btn-danger" @onclick="@Clear">Clear</button>
+    </div>
+</div>
+
+@code{
+    public int CommandMode { get; set; }
+    public string Command { get; set; } = string.Empty;
+    public string ResultString { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeAsync<object>("StartTerm", "ShellOutput");
+            }
+            catch
+            {
+                StateHasChanged();
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    async void RunCommand()
+    {
+        await JSRuntime.InvokeAsync<object>("WriteToTerm", Command);
+    }
+
+    void Clear()
+    {
+        Command = string.Empty;
+        ResultString = string.Empty;
+    }
+
+    void OnCommandKeydown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            RunCommand();
+        }
+    }
+}
