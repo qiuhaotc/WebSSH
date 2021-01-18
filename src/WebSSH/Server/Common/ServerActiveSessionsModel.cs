@@ -61,12 +61,12 @@ namespace WebSSH.Server
 
                 return sessionModel;
             }
-            catch (Exception ex)
+            catch
             {
                 shellStream?.Dispose();
                 sshClient?.Dispose();
 
-                throw ex;
+                throw;
             }
         }
 
