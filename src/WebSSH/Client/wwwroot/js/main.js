@@ -7,10 +7,12 @@ function ShowNotLogin(message) {
     alert(message);
 }
 
-var term;
+Terminal.applyAddon(fit);
+var term = new Terminal();
+
 function StartTerm(id) {
-    term = new Terminal();
     term.open(document.getElementById(id));
+    term.fit();
 }
 
 function WriteToTerm(content) {
