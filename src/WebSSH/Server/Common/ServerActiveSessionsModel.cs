@@ -83,7 +83,7 @@ namespace WebSSH.Server
             }
         }
 
-        public ConcurrentDictionary<Guid, ServerActiveSessionModel> Sessions { get; set; } = new ConcurrentDictionary<Guid, ServerActiveSessionModel>();
+        public ConcurrentDictionary<Guid, ServerActiveSessionModel> Sessions { get; set; } = new();
 
         void AddActiveSession(ServerActiveSessionModel session)
         {

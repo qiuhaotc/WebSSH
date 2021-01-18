@@ -48,7 +48,7 @@ namespace WebSSH.Shared
 
         public ClientStoredSessionModel Clone(bool sameKey = true)
         {
-            return new ClientStoredSessionModel
+            return new()
             {
                 UniqueKey = sameKey ? UniqueKey : Guid.NewGuid(),
                 DisplayName = DisplayName,

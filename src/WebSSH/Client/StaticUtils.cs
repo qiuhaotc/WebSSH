@@ -6,7 +6,7 @@ namespace WebSSH.Client
 {
     public static class StaticUtils
     {
-        public static ActiveSessionsModel ActiveSessionsModel { get; set; } = new ActiveSessionsModel();
+        public static ActiveSessionsModel ActiveSessionsModel { get; set; } = new();
 
         public static ClientStoredSessionModel ClientStoredSessionModel { get; set; }
 
@@ -36,6 +36,6 @@ namespace WebSSH.Client
             }
         }
 
-        static Dictionary<Guid, string> OutputStrings { get; set; } = new Dictionary<Guid, string>();
+        static Dictionary<Guid, string> OutputStrings { get; set; } = new();
     }
 }

@@ -20,6 +20,6 @@ namespace WebSSH.Shared
             Sessions.TryAdd(session.UniqueKey, session);
         }
 
-        public ConcurrentDictionary<Guid, ActiveSessionModel> Sessions { get; set; } = new ConcurrentDictionary<Guid, ActiveSessionModel>();
+        public ConcurrentDictionary<Guid, ActiveSessionModel> Sessions { get; set; } = new();
     }
 }

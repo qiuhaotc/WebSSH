@@ -42,7 +42,7 @@ namespace WebSSH.Server
             ShellConfiguration = shellConfiguration;
         }
 
-        static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new ConcurrentDictionary<string, ServerActiveSessionsModel>();
+        static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new();
         public ShellConfiguration ShellConfiguration { get; }
 
         public void AddShellToPool(string sessionId, ActiveSessionModel activeSessionModel)
