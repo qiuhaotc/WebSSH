@@ -12,11 +12,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F4072CDD-6930-4201-85DF-3E90F8082EFF}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Playground", "WebSSH.Playground\WebSSH.Playground.csproj", "{8331AC13-E11C-4D4C-8358-078CB2DE88E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSSH.Test", "WebSSH.Test\WebSSH.Test.csproj", "{2D743F09-5A90-48FE-82FA-1636A4988C8D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSSH.Test", "WebSSH.Test\WebSSH.Test.csproj", "{2D743F09-5A90-48FE-82FA-1636A4988C8D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{C1AFA026-727D-4C5F-996F-918706D4D01B}"
 	ProjectSection(SolutionItems) = preProject

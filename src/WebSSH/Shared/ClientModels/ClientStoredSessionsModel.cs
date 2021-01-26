@@ -32,6 +32,6 @@ namespace WebSSH.Shared
             }
         }
 
-        public List<ClientStoredSessionModel> Sessions { get; set; } = new List<ClientStoredSessionModel>();
+        public List<ClientStoredSessionModel> Sessions { get; set; } = new();
     }
 }

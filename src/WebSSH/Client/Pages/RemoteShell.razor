@@ -6,9 +6,8 @@
 <h3>Shell</h3>
 
 <div class="row">
-    <div class="form-group col-md-12">
-        <label for="CommandText">Shell Output</label>
-        <textarea class="form-control" id="ShellOutput" style="height:26em" readonly>@ResultString</textarea>
+    <div class="col-md-12">
+        <div id="ShellOutput"></div>
     </div>
     <div class="form-group col-md-2">
         <label for="CommandMode">Command Mode</label>
@@ -41,21 +40,21 @@
 
     public int CommandMode { get; set; }
 
-    string resultString = string.Empty;
-
     static Task task;
     static System.Threading.CancellationTokenSource cancellationTokenSource;
     public string Command { get; set; } = string.Empty;
-    public string ResultString => StaticUtils.GetOutputString(UniqueId);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        ScrollToBottom();
-
         if (firstRender)
         {
             try
             {
+                await JSRuntime.InvokeAsync<object>("StartTerm", "ShellOutput");
+                WriteToConsole();
+
+                currentCommandLine = StaticUtils.InitCurrentCommandLine(UniqueId);
+
                 cancellationTokenSource?.Cancel();
                 cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
@@ -95,8 +94,7 @@
                             {
                                 if (!string.IsNullOrEmpty(response.Response.Output))
                                 {
-                                    StaticUtils.AddOutputString(UniqueId, response.Response.Output);
-                                    StateHasChanged();
+                                    await WriteToConsole(response.Response.Output);
 
                                     if (response.Response.Lines == Constants.MaxinumLines)
                                     {
@@ -106,8 +104,8 @@
                             }
                             else
                             {
-                                StaticUtils.AddOutputString(UniqueId, Environment.NewLine + response.ExtraMessage);
-                                StateHasChanged();
+                                await WriteToConsole(response.ExtraMessage);
+
 
                                 if (response.StausResult == StausResult.Exception)
                                 {
@@ -128,13 +126,12 @@
                 }
                 else
                 {
-                    StaticUtils.AddOutputString(UniqueId, Environment.NewLine + "Not connected");
+                    await WriteToConsole("Not connected");
                 }
             }
             catch (Exception ex)
             {
-                StaticUtils.AddOutputString(UniqueId, Environment.NewLine + ex.Message);
-                StateHasChanged();
+                await WriteToConsole(ex.Message);
             }
         }
 
@@ -152,8 +149,7 @@
     {
         if (IsRunningCommand)
         {
-            StaticUtils.AddOutputString(UniqueId, Environment.NewLine + "Is running command, please wait for pre-command finished");
-            StateHasChanged();
+            await WriteToConsole("Is running command, please wait for pre-command finished");
             return;
         }
 
@@ -161,6 +157,8 @@
 
         try
         {
+            StaticUtils.RecordCommands(UniqueId, Command, ref currentCommandLine);
+
             var content = await Http.GetAsync("/api/Shell/RunShellCommand?command=" + System.Web.HttpUtility.UrlEncode(Command) + "&uniqueId=" + UniqueId);
             if (content.IsSuccessStatusCode)
             {
@@ -168,7 +166,7 @@
 
                 if (response.StausResult != StausResult.Successful || !response.Response)
                 {
-                    StaticUtils.AddOutputString(UniqueId, Environment.NewLine + response.ExtraMessage);
+                    await WriteToConsole(response.ExtraMessage);
                 }
             }
             else
@@ -179,7 +177,7 @@
         }
         catch (Exception ex)
         {
-            StaticUtils.AddOutputString(UniqueId, Environment.NewLine + ex.Message);
+            await WriteToConsole(ex.Message);
         }
 
         IsRunningCommand = false;
@@ -187,11 +185,16 @@
         StateHasChanged();
     }
 
-    void Clear()
+    async void Clear()
     {
         Command = string.Empty;
-        StaticUtils.ClearOutputString(UniqueId);
+        StaticUtils.Clear(UniqueId);
+        await JSRuntime.InvokeAsync<object>("ClearTerm");
+        currentOutputLine = 0;
+        currentCommandLine = 1;
     }
+
+    int currentCommandLine;
 
     void OnCommandKeydown(KeyboardEventArgs args)
     {
@@ -199,10 +202,45 @@
         {
             RunCommand();
         }
+        else if(args.Key == "ArrowUp")
+        {
+            var result = StaticUtils.GetPreCommand(UniqueId, ref currentCommandLine);
+            if (result.Successful)
+            {
+                Command = result.CommandStr;
+            }
+        }
+        else if(args.Key == "ArrowDown")
+        {
+            var result = StaticUtils.GetNextCommand(UniqueId, ref currentCommandLine);
+            if (result.Successful)
+            {
+                Command = result.CommandStr;
+            }
+        }
     }
 
-    async void ScrollToBottom()
+    int currentOutputLine;
+
+    async Task WriteToConsole(string messageToWrite)
     {
-        await JSRuntime.InvokeVoidAsync("ScrollToBottom", "ShellOutput");
+        StaticUtils.AddOutputString(UniqueId, messageToWrite);
+
+        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentOutputLine))
+        {
+            await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
+        }
+    }
+
+    async void WriteToConsole()
+    {
+        await JSRuntime.InvokeAsync<object>("ClearTerm");
+
+        currentOutputLine = 0;
+
+        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentOutputLine))
+        {
+            await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
+        }
     }
 }

@@ -57,7 +57,7 @@
         IsLogin = result;
     }
 
-    public ClientLoginModel LoginModel { get; set; } = new ClientLoginModel();
+    public ClientLoginModel LoginModel { get; set; } = new();
     public bool OnLogin { get; set; }
     public bool? IsLogin { get; set; }
     public string CaptchaUrl { get; set; } = "api/Login/GenerateCaptcha";

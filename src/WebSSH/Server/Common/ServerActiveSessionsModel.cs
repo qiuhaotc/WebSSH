@@ -48,6 +48,11 @@ namespace WebSSH.Server
                     try
                     {
                         outputQueue.Enqueue(Encoding.UTF8.GetString(e.Data));
+
+                        if(outputQueue.Count > Constants.MaxinumCachedLines)
+                        {
+                            outputQueue.TryDequeue(out _);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -61,12 +66,12 @@ namespace WebSSH.Server
 
                 return sessionModel;
             }
-            catch (Exception ex)
+            catch
             {
                 shellStream?.Dispose();
                 sshClient?.Dispose();
 
-                throw ex;
+                throw;
             }
         }
 
@@ -83,7 +88,7 @@ namespace WebSSH.Server
             }
         }
 
-        public ConcurrentDictionary<Guid, ServerActiveSessionModel> Sessions { get; set; } = new ConcurrentDictionary<Guid, ServerActiveSessionModel>();
+        public ConcurrentDictionary<Guid, ServerActiveSessionModel> Sessions { get; set; } = new();
 
         void AddActiveSession(ServerActiveSessionModel session)
         {

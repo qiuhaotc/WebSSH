@@ -42,7 +42,7 @@ namespace WebSSH.Server
             ShellConfiguration = shellConfiguration;
         }
 
-        static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new ConcurrentDictionary<string, ServerActiveSessionsModel>();
+        static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new();
         public ShellConfiguration ShellConfiguration { get; }
 
         public void AddShellToPool(string sessionId, ActiveSessionModel activeSessionModel)
@@ -56,10 +56,21 @@ namespace WebSSH.Server
             sessionsModel.Connected(activeSessionModel, ShellConfiguration);
         }
 
+        const string ControlCommand = "ctrl + ";
+
         public void RunShellCommand(string sessionId, Guid uniqueId, string command)
         {
             if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
             {
+                if (command?.StartsWith(ControlCommand) ?? false)
+                {
+                    var lastWord = command[ControlCommand.Length..].ToLower();
+                    if (lastWord.Length == 1 && lastWord[0] >= 'a' && lastWord[0] <= 'z')
+                    {
+                        command = ((char)(lastWord[0] - 96)).ToString();
+                    }
+                }
+
                 serverActiveSessionModel.ShellStream.WriteLine(command);
             }
             else
