@@ -16,7 +16,13 @@ function StartTerm(id) {
 }
 
 function WriteToTerm(content) {
-    if (term != null) {
+    if (term !== null) {
         term.writeln(content);
+    }
+}
+
+function ClearTerm() {
+    if (term !== null) {
+        term.clear();
     }
 }

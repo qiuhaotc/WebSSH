@@ -46,14 +46,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        ScrollToBottom();
-
         if (firstRender)
         {
             try
             {
                 await JSRuntime.InvokeAsync<object>("StartTerm", "ShellOutput");
-                await WriteToConsole();
+                WriteToConsole();
+
+                currentCommandLine = StaticUtils.InitCurrentCommandLine(UniqueId);
 
                 cancellationTokenSource?.Cancel();
                 cancellationTokenSource?.Dispose();
@@ -157,6 +157,8 @@
 
         try
         {
+            StaticUtils.RecordCommands(UniqueId, Command, ref currentCommandLine);
+
             var content = await Http.GetAsync("/api/Shell/RunShellCommand?command=" + System.Web.HttpUtility.UrlEncode(Command) + "&uniqueId=" + UniqueId);
             if (content.IsSuccessStatusCode)
             {
@@ -183,11 +185,16 @@
         StateHasChanged();
     }
 
-    void Clear()
+    async void Clear()
     {
         Command = string.Empty;
-        StaticUtils.ClearOutputString(UniqueId);
+        StaticUtils.Clear(UniqueId);
+        await JSRuntime.InvokeAsync<object>("ClearTerm");
+        currentOutputLine = 0;
+        currentCommandLine = 1;
     }
+
+    int currentCommandLine;
 
     void OnCommandKeydown(KeyboardEventArgs args)
     {
@@ -195,32 +202,45 @@
         {
             RunCommand();
         }
+        else if(args.Key == "ArrowUp")
+        {
+            var result = StaticUtils.GetPreCommand(UniqueId, ref currentCommandLine);
+            if (result.Successful)
+            {
+                Command = result.CommandStr;
+            }
+        }
+        else if(args.Key == "ArrowDown")
+        {
+            var result = StaticUtils.GetNextCommand(UniqueId, ref currentCommandLine);
+            if (result.Successful)
+            {
+                Command = result.CommandStr;
+            }
+        }
     }
 
-    int currentLine;
+    int currentOutputLine;
 
     async Task WriteToConsole(string messageToWrite)
     {
         StaticUtils.AddOutputString(UniqueId, messageToWrite);
 
-        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentLine))
+        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentOutputLine))
         {
             await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
         }
     }
 
-    async Task WriteToConsole()
+    async void WriteToConsole()
     {
-        currentLine = 0;
+        await JSRuntime.InvokeAsync<object>("ClearTerm");
 
-        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentLine))
+        currentOutputLine = 0;
+
+        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentOutputLine))
         {
             await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
         }
-    }
-
-    async void ScrollToBottom()
-    {
-        await JSRuntime.InvokeVoidAsync("ScrollToBottom", "ShellOutput");
     }
 }

@@ -67,7 +67,7 @@ namespace WebSSH.Server
                     var lastWord = command[ControlCommand.Length..].ToLower();
                     if (lastWord.Length == 1 && lastWord[0] >= 'a' && lastWord[0] <= 'z')
                     {
-                        command = ((char)(lastWord[0] - 94)).ToString();
+                        command = ((char)(lastWord[0] - 96)).ToString();
                     }
                 }
 

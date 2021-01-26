@@ -48,6 +48,11 @@ namespace WebSSH.Server
                     try
                     {
                         outputQueue.Enqueue(Encoding.UTF8.GetString(e.Data));
+
+                        if(outputQueue.Count > Constants.MaxinumCachedLines)
+                        {
+                            outputQueue.TryDequeue(out _);
+                        }
                     }
                     catch (Exception ex)
                     {
