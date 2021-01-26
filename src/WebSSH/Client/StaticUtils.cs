@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using WebSSH.Shared;
 
 namespace WebSSH.Client
@@ -12,20 +13,25 @@ namespace WebSSH.Client
 
         public static void AddOutputString(Guid uniqueKey, string message)
         {
-            if (!OutputStrings.TryGetValue(uniqueKey, out var outputString))
+            var messages = message?.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None) ?? Array.Empty<string>();
+
+            if (!OutputStrings.TryGetValue(uniqueKey, out var outputStrings))
             {
-                OutputStrings.Add(uniqueKey, message);
+                outputStrings = new List<string>();
+                OutputStrings.Add(uniqueKey, outputStrings);
             }
-            else
-            {
-                outputString += message;
-                OutputStrings[uniqueKey] = outputString;
-            }
+
+            outputStrings.AddRange(messages);
         }
 
-        public static string GetOutputString(Guid uniqueKey)
+        public static string[] GetOutputString(Guid uniqueKey, ref int currentLine)
         {
-            return OutputStrings.TryGetValue(uniqueKey, out var outputString) ? outputString : string.Empty;
+            var outputs = OutputStrings.TryGetValue(uniqueKey, out var outputStrings) ? outputStrings : new List<string>();
+
+            var lines = outputs.Skip(currentLine).ToArray();
+            currentLine += lines.Length;
+
+            return lines;
         }
 
         public static void ClearOutputString(Guid uniqueKey)
@@ -36,6 +42,6 @@ namespace WebSSH.Client
             }
         }
 
-        static Dictionary<Guid, string> OutputStrings { get; set; } = new();
+        static Dictionary<Guid, List<string>> OutputStrings { get; set; } = new();
     }
 }

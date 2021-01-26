@@ -17,6 +17,6 @@ function StartTerm(id) {
 
 function WriteToTerm(content) {
     if (term != null) {
-        term.write(content);
+        term.writeln(content);
     }
 }

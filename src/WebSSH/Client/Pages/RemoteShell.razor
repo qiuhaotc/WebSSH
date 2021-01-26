@@ -6,9 +6,8 @@
 <h3>Shell</h3>
 
 <div class="row">
-    <div class="form-group col-md-12">
-        <label for="CommandText">Shell Output</label>
-        <textarea class="form-control" id="ShellOutput" style="height:26em" readonly>@ResultString</textarea>
+    <div class="col-md-12">
+        <div id="ShellOutput"></div>
     </div>
     <div class="form-group col-md-2">
         <label for="CommandMode">Command Mode</label>
@@ -41,12 +40,9 @@
 
     public int CommandMode { get; set; }
 
-    string resultString = string.Empty;
-
     static Task task;
     static System.Threading.CancellationTokenSource cancellationTokenSource;
     public string Command { get; set; } = string.Empty;
-    public string ResultString => StaticUtils.GetOutputString(UniqueId);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -56,6 +52,9 @@
         {
             try
             {
+                await JSRuntime.InvokeAsync<object>("StartTerm", "ShellOutput");
+                await WriteToConsole();
+
                 cancellationTokenSource?.Cancel();
                 cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
@@ -95,8 +94,7 @@
                             {
                                 if (!string.IsNullOrEmpty(response.Response.Output))
                                 {
-                                    StaticUtils.AddOutputString(UniqueId, response.Response.Output);
-                                    StateHasChanged();
+                                    await WriteToConsole(response.Response.Output);
 
                                     if (response.Response.Lines == Constants.MaxinumLines)
                                     {
@@ -106,8 +104,8 @@
                             }
                             else
                             {
-                                StaticUtils.AddOutputString(UniqueId, Environment.NewLine + response.ExtraMessage);
-                                StateHasChanged();
+                                await WriteToConsole(response.ExtraMessage);
+
 
                                 if (response.StausResult == StausResult.Exception)
                                 {
@@ -128,13 +126,12 @@
                 }
                 else
                 {
-                    StaticUtils.AddOutputString(UniqueId, Environment.NewLine + "Not connected");
+                    await WriteToConsole("Not connected");
                 }
             }
             catch (Exception ex)
             {
-                StaticUtils.AddOutputString(UniqueId, Environment.NewLine + ex.Message);
-                StateHasChanged();
+                await WriteToConsole(ex.Message);
             }
         }
 
@@ -152,8 +149,7 @@
     {
         if (IsRunningCommand)
         {
-            StaticUtils.AddOutputString(UniqueId, Environment.NewLine + "Is running command, please wait for pre-command finished");
-            StateHasChanged();
+            await WriteToConsole("Is running command, please wait for pre-command finished");
             return;
         }
 
@@ -168,7 +164,7 @@
 
                 if (response.StausResult != StausResult.Successful || !response.Response)
                 {
-                    StaticUtils.AddOutputString(UniqueId, Environment.NewLine + response.ExtraMessage);
+                    await WriteToConsole(response.ExtraMessage);
                 }
             }
             else
@@ -179,7 +175,7 @@
         }
         catch (Exception ex)
         {
-            StaticUtils.AddOutputString(UniqueId, Environment.NewLine + ex.Message);
+            await WriteToConsole(ex.Message);
         }
 
         IsRunningCommand = false;
@@ -198,6 +194,28 @@
         if (args.Key == "Enter")
         {
             RunCommand();
+        }
+    }
+
+    int currentLine;
+
+    async Task WriteToConsole(string messageToWrite)
+    {
+        StaticUtils.AddOutputString(UniqueId, messageToWrite);
+
+        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentLine))
+        {
+            await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
+        }
+    }
+
+    async Task WriteToConsole()
+    {
+        currentLine = 0;
+
+        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentLine))
+        {
+            await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
         }
     }
 
