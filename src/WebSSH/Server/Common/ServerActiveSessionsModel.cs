@@ -38,7 +38,7 @@ namespace WebSSH.Server
                 string result = null;
                 while ((result = sessionModel.ShellStream.ReadLine(TimeSpan.FromSeconds(0.3))) != null)
                 {
-                    outputQueue.Enqueue(result + Environment.NewLine);
+                    outputQueue.Enqueue(result + Constants.NewLineForShell);
                 }
 
                 outputQueue.Enqueue(sessionModel.ShellStream.Read());
@@ -49,7 +49,7 @@ namespace WebSSH.Server
                     {
                         outputQueue.Enqueue(Encoding.UTF8.GetString(e.Data));
 
-                        if(outputQueue.Count > Constants.MaxinumCachedLines)
+                        if(outputQueue.Count > Constants.MaxinumQueueCount)
                         {
                             outputQueue.TryDequeue(out _);
                         }

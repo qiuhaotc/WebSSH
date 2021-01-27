@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using WebSSH.Shared;
 
 namespace WebSSH.Client
@@ -13,30 +14,28 @@ namespace WebSSH.Client
 
         public static void AddOutputString(Guid uniqueKey, string message)
         {
-            var messages = message.SplitByLines();
-
             if (!OutputStrings.TryGetValue(uniqueKey, out var outputStrings))
             {
-                outputStrings = new List<string>();
+                outputStrings = new StringBuilder();
                 OutputStrings.Add(uniqueKey, outputStrings);
             }
 
-            outputStrings.AddRange(messages);
+            outputStrings.Append(message);
 
-            if (outputStrings.Count > Constants.MaxinumCachedLines)
+            if (outputStrings.Length > Constants.MaxinumOutputLength)
             {
-                outputStrings.RemoveRange(0, outputStrings.Count - Constants.MaxinumCachedLines);
+                outputStrings.Remove(0, outputStrings.Length - Constants.MaxinumOutputLength);
             }
         }
 
-        public static string[] GetOutputString(Guid uniqueKey, ref int currentLine)
+        public static string GetOutputString(Guid uniqueKey, ref int currentIndex)
         {
-            var outputs = OutputStrings.TryGetValue(uniqueKey, out var outputStrings) ? outputStrings : new List<string>();
+            var outputs = OutputStrings.TryGetValue(uniqueKey, out var outputStrings) ? outputStrings : null;
 
-            var lines = outputs.Skip(currentLine).ToArray();
-            currentLine += lines.Length;
+            var outputStr = new string(outputs?.ToString().Skip(currentIndex).ToArray() ?? Array.Empty<char>());
+            currentIndex += outputStr.Length;
 
-            return lines;
+            return outputStr;
         }
 
         public static (string CommandStr, bool Successful) GetPreCommand(Guid uniqueKey, ref int currentCommandLine)
@@ -104,7 +103,7 @@ namespace WebSSH.Client
             }
         }
 
-        static Dictionary<Guid, List<string>> OutputStrings { get; set; } = new();
+        static Dictionary<Guid, StringBuilder> OutputStrings { get; set; } = new();
         static Dictionary<Guid, List<string>> Commands { get; set; } = new();
 
         static string[] SplitByLines(this string str)

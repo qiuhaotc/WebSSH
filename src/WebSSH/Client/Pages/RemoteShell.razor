@@ -94,7 +94,7 @@
                             {
                                 if (!string.IsNullOrEmpty(response.Response.Output))
                                 {
-                                    await WriteToConsole(response.Response.Output);
+                                    await WriteToConsole(response.Response.Output, false);
 
                                     if (response.Response.Lines == Constants.MaxinumLines)
                                     {
@@ -190,7 +190,7 @@
         Command = string.Empty;
         StaticUtils.Clear(UniqueId);
         await JSRuntime.InvokeAsync<object>("ClearTerm");
-        currentOutputLine = 0;
+        currentOutputIndex = 0;
         currentCommandLine = 1;
     }
 
@@ -202,7 +202,7 @@
         {
             RunCommand();
         }
-        else if(args.Key == "ArrowUp")
+        else if (args.Key == "ArrowUp")
         {
             var result = StaticUtils.GetPreCommand(UniqueId, ref currentCommandLine);
             if (result.Successful)
@@ -210,7 +210,7 @@
                 Command = result.CommandStr;
             }
         }
-        else if(args.Key == "ArrowDown")
+        else if (args.Key == "ArrowDown")
         {
             var result = StaticUtils.GetNextCommand(UniqueId, ref currentCommandLine);
             if (result.Successful)
@@ -220,27 +220,21 @@
         }
     }
 
-    int currentOutputLine;
+    int currentOutputIndex;
 
-    async Task WriteToConsole(string messageToWrite)
+    async Task WriteToConsole(string messageToWrite, bool addNewLine = true)
     {
-        StaticUtils.AddOutputString(UniqueId, messageToWrite);
+        StaticUtils.AddOutputString(UniqueId, addNewLine ? (Constants.NewLineForShell + messageToWrite + Constants.NewLineForShell) : messageToWrite);
 
-        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentOutputLine))
-        {
-            await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
-        }
+        await JSRuntime.InvokeAsync<object>("WriteToTerm", StaticUtils.GetOutputString(UniqueId, ref currentOutputIndex));
     }
 
     async void WriteToConsole()
     {
         await JSRuntime.InvokeAsync<object>("ClearTerm");
 
-        currentOutputLine = 0;
+        currentOutputIndex = 0;
 
-        foreach (var message in StaticUtils.GetOutputString(UniqueId, ref currentOutputLine))
-        {
-            await JSRuntime.InvokeAsync<object>("WriteToTerm", message);
-        }
+        await JSRuntime.InvokeAsync<object>("WriteToTerm", StaticUtils.GetOutputString(UniqueId, ref currentOutputIndex));
     }
 }

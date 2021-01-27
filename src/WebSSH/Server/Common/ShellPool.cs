@@ -23,7 +23,7 @@ namespace WebSSH.Server
                     foreach (var shell in ShellPoolDictionary.ToArray())
                     {
                         // Haven't access more than Max Idle Minutes or Connected Is False
-                        var expiredShells = shell.Value.Sessions.Where(u => u.Value.StartSessionDate < DateTime.Now.AddMinutes(-shellConfiguration.MaxIdleMinutes) || !u.Value.Client.IsConnected).ToArray();
+                        var expiredShells = shell.Value.Sessions.Where(u => u.Value.LastAccessSessionDate < DateTime.Now.AddMinutes(-shellConfiguration.MaxIdleMinutes) || !u.Value.Client.IsConnected).ToArray();
 
                         foreach (var expiredShell in expiredShells)
                         {
@@ -71,6 +71,7 @@ namespace WebSSH.Server
                     }
                 }
 
+                serverActiveSessionModel.LastAccessSessionDate = DateTime.Now;
                 serverActiveSessionModel.ShellStream.WriteLine(command);
             }
             else
@@ -84,14 +85,15 @@ namespace WebSSH.Server
             if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
             {
                 var totalLines = 0;
-                var outputStringBuilder = new StringBuilder();
+                StringBuilder outputStringBuilder = null;
                 while (totalLines < Constants.MaxinumLines && serverActiveSessionModel.OutputQueue.TryDequeue(out var output))
                 {
                     totalLines++;
+                    outputStringBuilder = outputStringBuilder ?? new StringBuilder();
                     outputStringBuilder.Append(output);
                 }
 
-                return new ServerOutput { Output = outputStringBuilder.ToString(), Lines = totalLines };
+                return new ServerOutput { Output = outputStringBuilder?.ToString() ?? string.Empty, Lines = totalLines };
             }
             else
             {
