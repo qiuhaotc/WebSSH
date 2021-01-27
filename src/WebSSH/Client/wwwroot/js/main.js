@@ -23,6 +23,6 @@ function WriteToTerm(content) {
 
 function ClearTerm() {
     if (term !== null) {
-        term.clear();
+        term.reset();
     }
 }
