@@ -23,7 +23,7 @@ Go to management page, will list all available connected servers.
 Features:
 
 1. Multi lines command
-2. Recall command
+2. Recall command, in single line mode, press arrow up and down can switch command from history
 3. Press "ctrl + c" can run command "^C", support "ctrl + [a-z]"
 
 ![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndRunningCommand.gif)
