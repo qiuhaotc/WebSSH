@@ -20,7 +20,15 @@ Press connected button, connected to remote server, running whatever command you
 
 Go to management page, will list all available connected servers.
 
+Features:
+
+1. Multi lines command
+2. Recall command
+3. Press "ctrl + c" can run command "^C", support "ctrl + [a-z]"
+
 ![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndRunningCommand.gif)
+
+![Run & Recall Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/RunCommandAndRecallCommand.gif)
 
 ## Deployment Via Docker
 
