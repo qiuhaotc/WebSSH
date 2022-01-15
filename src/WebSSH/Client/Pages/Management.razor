@@ -147,7 +147,14 @@
         }
         catch (Exception ex)
         {
-            Status = ex.Message;
+            if (ex is HttpRequestException httpRequestException && httpRequestException.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                NavManager.NavigateTo("/Login");
+            }
+            else
+            {
+                Status = ex.Message;
+            }
         }
     }
 

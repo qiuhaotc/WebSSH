@@ -5,6 +5,9 @@ using System.IO;
 
 namespace WebSSH.Server
 {
+
+#pragma warning disable CA1416 // 验证平台兼容性
+
     public class CaptchaImageUtils
     {
         public static byte[] GenerateCaptchaImage(int width, int height, string captchaCode, Random random)
@@ -94,4 +97,7 @@ namespace WebSSH.Server
         {
         }
     }
+
+#pragma warning restore CA1416 // 验证平台兼容性
+
 }

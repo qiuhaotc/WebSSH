@@ -21,16 +21,16 @@ namespace WebSSH.Server.Controllers
 
         public ShellConfiguration ShellConfiguration { get; }
 
-        public async Task<ClientLoginModel> Login(ClientLoginModel loginModel)
+        public async Task<ClientLoginModel> Login(ClientLoginModel loginModel, [FromServices] ShellConfiguration shellConfiguration)
         {
-            if (string.IsNullOrWhiteSpace(loginModel.Captcha) || HttpContext.Session.GetString(nameof(ClientLoginModel.Captcha)) != loginModel.Captcha.ToLowerInvariant())
+            if (shellConfiguration.NeedAuthorization && (string.IsNullOrWhiteSpace(loginModel.Captcha) || HttpContext.Session.GetString(nameof(ClientLoginModel.Captcha)) != loginModel.Captcha.ToLowerInvariant()))
             {
                 loginModel.Status = LoginStatus.Failed;
                 loginModel.Message = "Wrong captcha";
             }
             else
             {
-                var user = ShellConfiguration.Users.FirstOrDefault(u => u.UserName == loginModel.UserName && u.Password == loginModel.Password);
+                var user = ShellConfiguration.Users.FirstOrDefault(u => !shellConfiguration.NeedAuthorization || u.UserName == loginModel.UserName && u.Password == loginModel.Password);
 
                 if (user == null)
                 {
