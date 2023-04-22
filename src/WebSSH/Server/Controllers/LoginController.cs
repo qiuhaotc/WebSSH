@@ -30,7 +30,7 @@ namespace WebSSH.Server.Controllers
             }
             else
             {
-                var user = ShellConfiguration.Users.FirstOrDefault(u => !shellConfiguration.NeedAuthorization || u.UserName == loginModel.UserName && u.Password == loginModel.Password);
+                var user = ShellConfiguration.Users.FirstOrDefault(u => !shellConfiguration.NeedAuthorization || u.UserName.ToLower() == loginModel.UserName.ToLower() && u.Password == loginModel.Password);
 
                 if (user == null)
                 {
