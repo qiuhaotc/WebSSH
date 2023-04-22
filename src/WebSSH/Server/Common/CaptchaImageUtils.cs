@@ -1,17 +1,22 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using System.Linq;
 
 namespace WebSSH.Server
 {
 
-#pragma warning disable CA1416 // 验证平台兼容性
 
     public class CaptchaImageUtils
-    {
-        public static byte[] GenerateCaptchaImage(int width, int height, string captchaCode, Random random)
+    {/*
+        public static byte[] GenerateCaptchaImage(int width, int height, string captchaCode)
         {
+            Random random = new Random();
             using var baseMap = new Bitmap(width, height);
             using var graphics = Graphics.FromImage(baseMap);
             graphics.Clear(GetRandomLightColor(random));
@@ -32,16 +37,18 @@ namespace WebSSH.Server
             return Convert.ToInt32(averageSize);
         }
 
-        static Color GetRandomDeepColor(Random random)
+        static Color GetRandomDeepColor()
         {
+            Random random = new Random();
             var redlow = 160;
             var greenLow = 100;
             var blueLow = 160;
             return Color.FromArgb(random.Next(redlow), random.Next(greenLow), random.Next(blueLow));
         }
 
-        static Color GetRandomLightColor(Random random)
+        static Color GetRandomLightColor()
         {
+            Random random = new Random();
             var low = 200;
             var high = 255;
 
@@ -52,8 +59,9 @@ namespace WebSSH.Server
             return Color.FromArgb(nRend, nGreen, nBlue);
         }
 
-        static void DrawCaptchaCode(int width, int height, string captchaCode, Random random, Graphics graphics)
+        static void DrawCaptchaCode(int width, int height, string captchaCode, Graphics graphics)
         {
+            Random random = new Random();
             SolidBrush fontBrush = new SolidBrush(Color.Black);
             var fontSize = GetFontSize(width, captchaCode.Length);
             var font = new Font(FontFamily.GenericSerif, fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
@@ -76,8 +84,9 @@ namespace WebSSH.Server
             }
         }
 
-        static void DrawDisorderLine(Random random, int width, int height, Graphics graphics)
+        static void DrawDisorderLine(int width, int height, Graphics graphics)
         {
+            Random random = new Random();
             var linePen = new Pen(new SolidBrush(Color.Black), 3);
             for (int i = 0; i < random.Next(3, 5); i++)
             {
@@ -95,9 +104,41 @@ namespace WebSSH.Server
 
         static void AdjustRippleEffect(Bitmap baseMap)
         {
+        }*/
+        public static byte[] GenerateCaptchaImage(int width, int height, string text, string? fontname = null, string? fontSize = null)
+        {
+            fontname = fontname ?? "Tahoma";
+            int fontsize = string.IsNullOrEmpty(fontSize) ? 12 : int.Parse(fontSize);
+            var texts = text.Split('\n');
+            var bgcolor = Color.White;
+            var fcolor = Color.Black;
+
+            int offset = fontsize + 7;
+            width = texts.Max(x => x.Length) * offset;
+            height = Math.Max(offset * texts.Length, width / 2);
+
+            Font font = SystemFonts.CreateFont(fontname, fontsize);
+
+            TextOptions textOptions = new(font);
+            IPathCollection glyphs = TextBuilder.GenerateGlyphs(text, textOptions);
+
+            width = (int)glyphs.Bounds.Width + 20;
+            height = (int)glyphs.Bounds.Height + 20;
+
+            height = Math.Max(height, width / 5);
+
+            using (Image image = new Image<Rgba32>(width, height, Color.White))
+            {
+                image.Mutate(x => x.DrawText(text, font, Color.Black, new PointF(10, 10)));
+                 
+                using (var ms = new MemoryStream())
+                {
+                    image.SaveAsJpeg(ms);
+                    return ms.ToArray();
+                }
+            }
         }
     }
 
-#pragma warning restore CA1416 // 验证平台兼容性
 
 }
