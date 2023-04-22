@@ -107,7 +107,7 @@ namespace WebSSH.Server
         }*/
         public static byte[] GenerateCaptchaImage(int width, int height, string text, string? fontname = null, string? fontSize = null)
         {
-            fontname = fontname ?? "Tahoma";
+            fontname = fontname ?? "Arial";
             int fontsize = string.IsNullOrEmpty(fontSize) ? 12 : int.Parse(fontSize);
             var texts = text.Split('\n');
             var bgcolor = Color.White;
