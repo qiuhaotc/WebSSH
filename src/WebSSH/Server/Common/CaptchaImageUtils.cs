@@ -107,8 +107,13 @@ namespace WebSSH.Server
         }*/
         public static byte[] GenerateCaptchaImage(int width, int height, string text, string? fontname = null, string? fontSize = null)
         {
-            fontname = fontname ?? "calibri";
-            int fontsize = string.IsNullOrEmpty(fontSize) ? 12 : int.Parse(fontSize);
+            if (fontname == null)
+            {
+                var fonts = SystemFonts.Collection.Families;
+                fontname = fonts.Last().Name;
+            }
+
+            int fontsize = string.IsNullOrEmpty(fontSize) ? 15 : int.Parse(fontSize);
             var texts = text.Split('\n');
             var bgcolor = Color.White;
             var fcolor = Color.Black;
@@ -130,7 +135,7 @@ namespace WebSSH.Server
             using (Image image = new Image<Rgba32>(width, height, Color.White))
             {
                 image.Mutate(x => x.DrawText(text, font, Color.Black, new PointF(10, 10)));
-                 
+
                 using (var ms = new MemoryStream())
                 {
                     image.SaveAsJpeg(ms);
