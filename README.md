@@ -34,6 +34,10 @@ Features:
 
 ![Run & Recall Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/RunCommandAndRecallCommand.gif)
 
+## Running under Linux
+
+This project use "System.Drawing.Common", when running under Linux, you need to run command ```apt-get update && apt-get install -y libgdiplus``` to install ```libgdiplus```
+
 ## Deployment Via Docker
 
 Running your server at port 8080, config the password "your_password" to your own.
