@@ -8,3 +8,7 @@
 
 #use soft tabs (spaces) for indentation
 indent_style = space
+
+[*.csproj]
+indent_style = space
+indent_size = 2
