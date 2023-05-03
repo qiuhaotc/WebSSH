@@ -16,7 +16,7 @@ namespace WebSSH.Server
                 captcha += characters[random.Next(0, characters.Length)];
             }
 
-            captchaImages = CaptchaImageUtils.GenerateCaptchaImage(width, height, captcha);
+            captchaImages = CaptchaImageUtils.GenerateCaptchaImage(width, height, captcha, random);
 
             return captcha;
         }

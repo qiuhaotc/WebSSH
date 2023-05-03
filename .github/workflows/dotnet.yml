@@ -1,4 +1,4 @@
-name: .NET 6 publish and test
+name: .NET publish and test
 
 on:
   push:
