@@ -14,7 +14,7 @@ namespace WebSSH.Server
         public static byte[] GenerateCaptchaImage(int width, int height, string captchaCode, Random random)
         {
             var fontSize = GetFontSize(width, captchaCode.Length);
-            var fondFamily = SystemFonts.Collection.Families.FirstOrDefault(u => u.Name == "Consolas" || u.Name == "DejaVu Sans Mono");
+            var fondFamily = SystemFonts.Collection.Families.FirstOrDefault(u => u.Name == "Consolas");
             fondFamily = fondFamily == default ? SystemFonts.Collection.Families.Last() : fondFamily;
             var font = SystemFonts.CreateFont(fondFamily.Name, fontSize);
 
