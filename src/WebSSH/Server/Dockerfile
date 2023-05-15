@@ -5,6 +5,9 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
+RUN apt-get update; apt-get install -y fontconfig fonts-liberation
+RUN fc-cache -f -v
+
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["WebSSH/Server/WebSSH.Server.csproj", "WebSSH/Server/"]
