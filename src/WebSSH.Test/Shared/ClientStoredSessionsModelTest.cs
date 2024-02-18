@@ -1,5 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using WebSSH.Shared;
 
 namespace WebSSH.Test
@@ -10,10 +11,10 @@ namespace WebSSH.Test
         public void TestAddOrUpdateStoredSessions()
         {
             var storedSessionsModel = new ClientStoredSessionsModel();
-            Assert.AreEqual(0, storedSessionsModel.Sessions.Count);
+            ClassicAssert.AreEqual(0, storedSessionsModel.Sessions.Count);
 
             storedSessionsModel.AddOrUpdateStoredSessions(new ClientStoredSessionModel());
-            Assert.AreEqual(1, storedSessionsModel.Sessions.Count);
+            ClassicAssert.AreEqual(1, storedSessionsModel.Sessions.Count);
         }
 
         [Test]
@@ -22,13 +23,13 @@ namespace WebSSH.Test
             var sessionModel = new ClientStoredSessionModel();
             var storedSessionsModel = new ClientStoredSessionsModel();
             storedSessionsModel.AddOrUpdateStoredSessions(sessionModel);
-            Assert.AreEqual(1, storedSessionsModel.Sessions.Count);
+            ClassicAssert.AreEqual(1, storedSessionsModel.Sessions.Count);
 
             storedSessionsModel.RemoveStoredSession(Guid.NewGuid());
-            Assert.AreEqual(1, storedSessionsModel.Sessions.Count);
+            ClassicAssert.AreEqual(1, storedSessionsModel.Sessions.Count);
 
             storedSessionsModel.RemoveStoredSession(sessionModel.UniqueKey);
-            Assert.AreEqual(0, storedSessionsModel.Sessions.Count);
+            ClassicAssert.AreEqual(0, storedSessionsModel.Sessions.Count);
         }
     }
 }

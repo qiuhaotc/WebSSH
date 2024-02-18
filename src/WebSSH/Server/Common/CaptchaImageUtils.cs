@@ -83,10 +83,10 @@ namespace WebSSH.Server
         {
             for (int i = 0; i < random.Next(3, 5); i++)
             {
-                var linePen = new Pen(new SolidBrush(GetRandomLightColor(random)), 3);
+                var linePen = new SolidPen(new SolidBrush(GetRandomLightColor(random)), 3);
                 var startPoint = new Point(random.Next(0, width), random.Next(0, height));
                 var endPoint = new Point(random.Next(0, width), random.Next(0, height));
-                graphics.Mutate(operation => operation.DrawLines(linePen, startPoint, endPoint));
+                graphics.Mutate(operation => operation.DrawLine(linePen, startPoint, endPoint));
 
                 //var bezierPoint1 = new Point(random.Next(0, width), random.Next(0, height));
                 //var bezierPoint2 = new Point(random.Next(0, width), random.Next(0, height));
