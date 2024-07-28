@@ -36,11 +36,11 @@ Features:
 
 ## Deployment Via Docker
 
-Running your server at port 8080, config the password "your_password" to your own.
+Running your server at port 8070, config the password "your_password" to your own.
 
 ```bash
 docker pull qiuhaotc/webssh
-docker run -d --name webssh -p 8080:80 -e ShellConfiguration__Users__0__Password="your_password" --restart=always qiuhaotc/webssh
+docker run -d --name webssh -p 8070:8080 -e ShellConfiguration__Users__0__Password="your_password" --restart=always qiuhaotc/webssh
 ```
 
 ## Misc
