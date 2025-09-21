@@ -1,5 +1,7 @@
 # WebSSH
 
+English | [中文](README_CN.md)
+
 WebSSH allows you to SSH to your remote host anytime, anywhere.
 
 ## Demonstrate Page
@@ -14,13 +16,13 @@ Input the user name and password and captcha to login, user name and password co
 
 ![Login](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/LoginToServer.gif)
 
-### Mangement Connection
+### Management Connection
 
 ![Mangement Connection](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ManagementConnection.gif)
 
 ### Connected To Server, Running Command
 
-Press connected button, connected to remote server, running whatever command you want.
+Press the Connect button, connect to the remote server, then run whatever command you want.
 
 Go to management page, will list all available connected servers.
 
@@ -33,6 +35,41 @@ Features:
 ![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndRunningCommand.gif)
 
 ![Run & Recall Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/RunCommandAndRecallCommand.gif)
+
+## Real-time (SignalR) Enhancements
+
+From the latest version, WebSSH replaces periodic HTTP polling with ASP.NET Core SignalR for a truly real-time terminal experience:
+
+| Area | Before | Now (SignalR) |
+| ---- | ------ | -------------- |
+| Output refresh | 1s / 100ms adaptive polling | Push as soon as data arrives |
+| Bandwidth | Repeated empty responses | Only actual output payloads |
+| Command send | HTTP GET endpoint | Bi-directional hub method `RunCommand` |
+| Initial backlog | Multiple fetches | Single join flush + streaming |
+| Reconnect | Full page reliance | Automatic hub reconnect with status messages |
+
+Key benefits:
+
+1. Lower latency for interactive workflows (vim, tail -f, etc.).
+2. Reduced server & network overhead – no useless polling cycles.
+3. Better UX with connection state (Connected / Reconnecting / Disconnected).
+4. Extensible channel for future features (file upload, terminal resize, heartbeat).
+
+Technical notes:
+
+* Hub path: `/shellHub`
+* Group isolation: each browser session + shell GUID => SignalR group
+* Still keeps an output queue for initial backlog replay on (re)join
+* Automatic reconnect enabled; transient drops will not lose buffered output
+* Legacy endpoints (`GetShellOutput`, `IsConnected`, `RunShellCommand`) have been removed after migration
+
+Planned (roadmap ideas):
+
+* Terminal resizing sync (cols/rows)
+* Structured output channels (stdout/stderr separation)
+* Optional rate limiting / flood protection
+* Audit log of executed commands
+* Secure copy (SCP / SFTP) integration
 
 ## Deployment Via Docker
 

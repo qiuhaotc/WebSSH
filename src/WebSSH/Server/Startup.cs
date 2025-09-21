@@ -55,11 +55,12 @@ namespace WebSSH.Server
             });
 
             services.AddRazorPages();
+            services.AddSignalR();
 
             var config = new ShellConfiguration();
             Configuration.Bind("ShellConfiguration", config);
             services.AddSingleton(config);
-            services.AddSingleton(new ShellPool(config));
+            services.AddSingleton<ShellPool>(sp => new ShellPool(config, sp.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<WebSSH.Server.Hubs.ShellHub>>()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -92,6 +93,7 @@ namespace WebSSH.Server
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
+                endpoints.MapHub<WebSSH.Server.Hubs.ShellHub>("/shellHub");
                 endpoints.MapFallbackToFile("index.html");
             });
         }

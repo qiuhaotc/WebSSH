@@ -15,6 +15,7 @@ namespace WebSSH.Server
         public SshClient Client { get; set; }
         public ShellStream ShellStream { get; set; }
         public ConcurrentQueue<string> OutputQueue { get; set; }
+        public string SessionId { get; set; }
 
         public void Dispose()
         {

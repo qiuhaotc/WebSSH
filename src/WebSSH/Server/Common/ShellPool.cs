@@ -5,13 +5,15 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using WebSSH.Shared;
+using WebSSH.Server.Hubs;
 
 namespace WebSSH.Server
 {
     public class ShellPool
     {
-        public ShellPool(ShellConfiguration shellConfiguration)
+        public ShellPool(ShellConfiguration shellConfiguration, IHubContext<ShellHub> hubContext)
         {
             Task.Run(() =>
             {
@@ -40,10 +42,12 @@ namespace WebSSH.Server
             });
 
             ShellConfiguration = shellConfiguration;
+            HubContext = hubContext;
         }
 
         static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new();
-        public ShellConfiguration ShellConfiguration { get; }
+    public ShellConfiguration ShellConfiguration { get; }
+    public IHubContext<ShellHub> HubContext { get; }
 
         public void AddShellToPool(string sessionId, ActiveSessionModel activeSessionModel)
         {
@@ -53,7 +57,7 @@ namespace WebSSH.Server
                 ShellPoolDictionary.TryAdd(sessionId, sessionsModel);
             }
 
-            sessionsModel.Connected(activeSessionModel, ShellConfiguration);
+            sessionsModel.Connected(sessionId, activeSessionModel, ShellConfiguration, HubContext);
         }
 
         const string ControlCommand = "ctrl + ";

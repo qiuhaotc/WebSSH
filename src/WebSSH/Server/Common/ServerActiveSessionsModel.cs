@@ -4,12 +4,13 @@ using System.Text;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 using WebSSH.Shared;
+using Microsoft.AspNetCore.SignalR;
 
 namespace WebSSH.Server
 {
     public class ServerActiveSessionsModel
     {
-        public ServerActiveSessionModel Connected(ActiveSessionModel activeSessionModel, ShellConfiguration shellConfiguration)
+        public ServerActiveSessionModel Connected(string sessionId, ActiveSessionModel activeSessionModel, ShellConfiguration shellConfiguration, Microsoft.AspNetCore.SignalR.IHubContext<WebSSH.Server.Hubs.ShellHub> hubContext)
         {
             SshClient sshClient = null;
             ShellStream shellStream = null;
@@ -32,7 +33,8 @@ namespace WebSSH.Server
                     StartSessionDate = DateTime.Now,
                     LastAccessSessionDate = DateTime.Now,
                     StoredSessionModel = clientStoredSessionModel,
-                    OutputQueue = outputQueue
+                    OutputQueue = outputQueue,
+                    SessionId = sessionId
                 };
 
                 string result = null;
@@ -43,15 +45,26 @@ namespace WebSSH.Server
 
                 outputQueue.Enqueue(sessionModel.ShellStream.Read());
 
-                shellStream.DataReceived += (obj, e) =>
+                shellStream.DataReceived += async (obj, e) =>
                 {
                     try
                     {
-                        outputQueue.Enqueue(Encoding.UTF8.GetString(e.Data));
+                        var msg = Encoding.UTF8.GetString(e.Data);
+                        outputQueue.Enqueue(msg);
 
                         if(outputQueue.Count > Constants.MaxinumQueueCount)
                         {
                             outputQueue.TryDequeue(out _);
+                        }
+
+                        // Broadcast real-time output to group listeners
+                        try
+                        {
+                            await hubContext.Clients.Group(Hubs.ShellHub.BuildGroup(sessionId, sessionModel.UniqueKey)).SendAsync("ShellOutput", msg);
+                        }
+                        catch
+                        {
+                            // Ignore broadcast errors; queue still holds data.
                         }
                     }
                     catch (Exception ex)

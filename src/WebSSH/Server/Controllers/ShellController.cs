@@ -55,58 +55,8 @@ namespace WebSSH.Server.Controllers
             return response;
         }
 
-        public ServerResponse<bool> RunShellCommand(Guid uniqueId, string command)
-        {
-            var id = HttpContext.Session.GetString(Constants.ClientSessionIdName);
-            var response = new ServerResponse<bool> { StausResult = StausResult.Successful };
+        // Removed RunShellCommand, GetShellOutput, IsConnected after migrating to SignalR push model
 
-            try
-            {
-                if (string.IsNullOrEmpty(id))
-                {
-                    response.StausResult = StausResult.Failed;
-                    response.ExtraMessage = "No active sessions";
-                }
-                else
-                {
-                    ShellPool.RunShellCommand(id, uniqueId, command);
-                    response.Response = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                response.StausResult = StausResult.Exception;
-                response.ExtraMessage = ex.Message;
-            }
-
-            return response;
-        }
-
-        public ServerResponse<ServerOutput> GetShellOutput(Guid uniqueId)
-        {
-            var id = HttpContext.Session.GetString(Constants.ClientSessionIdName);
-            var response = new ServerResponse<ServerOutput> { StausResult = StausResult.Successful };
-
-            try
-            {
-                if (string.IsNullOrEmpty(id))
-                {
-                    response.StausResult = StausResult.Failed;
-                    response.ExtraMessage = "No active sessions";
-                }
-                else
-                {
-                    response.Response = ShellPool.GetShellOutput(id, uniqueId);
-                }
-            }
-            catch (Exception ex)
-            {
-                response.StausResult = StausResult.Exception;
-                response.ExtraMessage = ex.Message;
-            }
-
-            return response;
-        }
 
         public ServerResponse<bool> IsConnected(Guid uniqueId)
         {
