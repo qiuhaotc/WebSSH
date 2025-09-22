@@ -33,7 +33,6 @@
             {
                 dotNetRef = DotNetObjectReference.Create(this);
                 await JSRuntime.InvokeVoidAsync("websshTerm.init", "ShellOutput", dotNetRef);
-                currentOutputIndex = 0;
 
                 hubConnection = new HubConnectionBuilder()
                     .WithUrl(NavManager.ToAbsoluteUri("/shellHub"))
