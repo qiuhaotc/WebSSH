@@ -21,8 +21,27 @@ namespace WebSSH.Server
                 sshClient = new SshClient(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, clientStoredSessionModel.PasswordDecryped);
                 sshClient.ConnectionInfo.Timeout = TimeSpan.FromMinutes(timeOutMinutes);
                 sshClient.Connect();
-                shellStream = sshClient.CreateShellStream("Terminal", 80, 30, 800, 400, 1000);
                 var outputQueue = new ConcurrentQueue<string>();
+
+                var termModes = new System.Collections.Generic.Dictionary<Renci.SshNet.Common.TerminalModes, uint>
+                {
+                    { Renci.SshNet.Common.TerminalModes.ECHO, 1 },
+                    { Renci.SshNet.Common.TerminalModes.ICANON, 1 },
+                    { Renci.SshNet.Common.TerminalModes.ISIG, 1 }
+                };
+
+                // Use xterm-256color for better TUI compatibility (htop, vim, etc.)
+                shellStream = sshClient.CreateShellStream(
+                    "xterm-256color", // terminal type
+                    120,               // columns (initial)
+                    40,                // rows (initial)
+                    800,               // width pixels (approx)
+                    600,               // height pixels (approx)
+                    4096,              // buffer size
+                    termModes);
+
+                // Ensure TERM is set (some shells may rely on it); use \n instead of WriteLine to avoid extra CR in some shells
+                shellStream.Write("export TERM=xterm-256color\n");
 
                 var sessionModel = new ServerActiveSessionModel
                 {
@@ -37,13 +56,19 @@ namespace WebSSH.Server
                     SessionId = sessionId
                 };
 
-                string result = null;
-                while ((result = sessionModel.ShellStream.ReadLine(TimeSpan.FromSeconds(0.3))) != null)
+                // Non-blocking initial buffer read if any data already available
+                if (shellStream.DataAvailable)
                 {
-                    outputQueue.Enqueue(result + Constants.NewLineForShell);
+                    try
+                    {
+                        var initial = shellStream.Read();
+                        if (!string.IsNullOrEmpty(initial))
+                        {
+                            outputQueue.Enqueue(initial);
+                        }
+                    }
+                    catch { }
                 }
-
-                outputQueue.Enqueue(sessionModel.ShellStream.Read());
 
                 shellStream.DataReceived += async (obj, e) =>
                 {
