@@ -60,23 +60,14 @@ namespace WebSSH.Server
             sessionsModel.Connected(sessionId, activeSessionModel, ShellConfiguration, HubContext);
         }
 
-        const string ControlCommand = "ctrl + ";
-
-        public void RunShellCommand(string sessionId, Guid uniqueId, string command)
+        // Raw input without any transformation (supports interactive TUIs, control chars, etc.)
+        public void SendInputRaw(string sessionId, Guid uniqueId, string data)
         {
+            if (data == null) return;
             if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
             {
-                if (command?.StartsWith(ControlCommand) ?? false)
-                {
-                    var lastWord = command[ControlCommand.Length..].ToLower();
-                    if (lastWord.Length == 1 && lastWord[0] >= 'a' && lastWord[0] <= 'z')
-                    {
-                        command = ((char)(lastWord[0] - 96)).ToString();
-                    }
-                }
-
                 serverActiveSessionModel.LastAccessSessionDate = DateTime.Now;
-                serverActiveSessionModel.ShellStream.WriteLine(command);
+                serverActiveSessionModel.ShellStream.Write(data);
             }
             else
             {

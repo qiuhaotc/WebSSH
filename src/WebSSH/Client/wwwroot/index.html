@@ -10,7 +10,7 @@
     <link href="css/app.css" rel="stylesheet" />
     <link href="manifest.json" rel="manifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
-    <link href="css/xterm.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/xterm.min.css" />
 </head>
 
 <body>
@@ -21,10 +21,10 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+    <script src="js/xterm.js"></script>
+    <script src="js/xtermInterop.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>
-    <script src="js/xterm.min.js"></script>
-    <script src="js/fit.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

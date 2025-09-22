@@ -60,24 +60,22 @@ namespace WebSSH.Server.Hubs
             }
         }
 
-        public async Task RunCommand(Guid uniqueId, string command)
+        public async Task SendInput(Guid uniqueId, string data)
         {
-            if (string.IsNullOrWhiteSpace(command)) return;
-
+            if (string.IsNullOrEmpty(data)) return;
             var httpContext = Context.GetHttpContext();
             var sessionId = httpContext?.Session.GetString(Constants.ClientSessionIdName);
             if (string.IsNullOrEmpty(sessionId))
             {
                 throw new HubException("No active session");
             }
-
             try
             {
-                ShellPool.RunShellCommand(sessionId, uniqueId, command);
+                ShellPool.SendInputRaw(sessionId, uniqueId, data);
             }
             catch (Exception ex)
             {
-                await Clients.Caller.SendAsync("ShellOutput", $"Error sending command: {ex.Message}");
+                await Clients.Caller.SendAsync("ShellOutput", $"Error input: {ex.Message}");
             }
         }
     }

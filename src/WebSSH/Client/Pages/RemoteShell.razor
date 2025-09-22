@@ -9,30 +9,10 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div id="ShellOutput"></div>
-        <div class="mt-2 small text-muted">Connection: @connectionStatus</div>
-    </div>
-    <div class="form-group col-md-2">
-        <label for="CommandMode">Command Mode</label>
-        <select class="form-control" id="CommandMode" @bind="@CommandMode">
-            <option value="0">Single Line</option>
-            <option value="1">Multi Lines</option>
-        </select>
-    </div>
-    <div class="form-group  col-md-10">
-        <label for="CommandText">Command Content</label>
-        @if (CommandMode == 0)
-        {
-            <input type="text" class="form-control" autocomplete="off" id="CommandText" @onkeydown="@OnCommandKeydown" @bind-value="@Command" @bind-value:event="oninput">
-        }
-        else
-        {
-            <textarea id="CommandText" class="form-control" @bind="@Command" @bind:event="oninput"></textarea>
-        }
-    </div>
-    <div class="form-group  col-md-12">
-        <button type="button" class="btn btn-primary" @onclick="@RunCommand">Run Command</button>
-        <button type="button" class="btn btn-danger" @onclick="@Clear">Clear</button>
+        <div id="ShellOutput" style="width:100%;height:70vh; background:#000; color:#fff;"></div>
+        <div class="mt-2 small text-muted">Connection: @connectionStatus
+            <button class="btn btn-sm btn-secondary ms-2" @onclick="Clear">Clear</button>
+        </div>
     </div>
 </div>
 
@@ -41,11 +21,9 @@
     [Parameter]
     public Guid UniqueId { get; set; }
 
-    public int CommandMode { get; set; }
-
     HubConnection hubConnection;
     string connectionStatus = "Initializing";
-    public string Command { get; set; } = string.Empty;
+    DotNetObjectReference<RemoteShell> dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -53,24 +31,24 @@
         {
             try
             {
-                await JSRuntime.InvokeAsync<object>("StartTerm", "ShellOutput");
-                WriteToConsole();
-                currentCommandLine = StaticUtils.InitCurrentCommandLine(UniqueId);
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JSRuntime.InvokeVoidAsync("websshTerm.init", "ShellOutput", dotNetRef);
+                currentOutputIndex = 0;
 
                 hubConnection = new HubConnectionBuilder()
                     .WithUrl(NavManager.ToAbsoluteUri("/shellHub"))
                     .WithAutomaticReconnect()
                     .Build();
 
-                hubConnection.On<string>("ShellOutput", async (output) =>
+                hubConnection.On<string>("ShellOutput", (output) =>
                 {
-                    await WriteToConsole(output, false);
+                    _ = JSRuntime.InvokeVoidAsync("websshTerm.write", output);
                 });
 
                 hubConnection.Reconnecting += error =>
                 {
                     connectionStatus = "Reconnecting";
-                    _ = WriteToConsole($"Connection lost, reconnecting... {error?.Message}");
+                    _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Connection lost, reconnecting... {error?.Message}\r\n");
                     InvokeAsync(StateHasChanged);
                     return Task.CompletedTask;
                 };
@@ -78,7 +56,7 @@
                 hubConnection.Reconnected += id =>
                 {
                     connectionStatus = "Connected";
-                    _ = WriteToConsole("Reconnected");
+                    _ = JSRuntime.InvokeVoidAsync("websshTerm.write", "\r\n[client] Reconnected.\r\n");
                     InvokeAsync(StateHasChanged);
                     return Task.CompletedTask;
                 };
@@ -86,7 +64,7 @@
                 hubConnection.Closed += error =>
                 {
                     connectionStatus = "Disconnected";
-                    _ = WriteToConsole($"Connection closed: {error?.Message}");
+                    _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Connection closed: {error?.Message}\r\n");
                     InvokeAsync(StateHasChanged);
                     return Task.CompletedTask;
                 };
@@ -97,7 +75,7 @@
             }
             catch (Exception ex)
             {
-                await WriteToConsole(ex.Message);
+                await JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] {ex.Message}\r\n");
                 connectionStatus = "Error";
             }
         }
@@ -110,98 +88,23 @@
         await base.OnInitializedAsync();
     }
 
-    bool IsRunningCommand { get; set; }
-
-    async void RunCommand()
-    {
-        if (IsRunningCommand)
-        {
-            await WriteToConsole("Is running command, please wait for pre-command finished");
-            return;
-        }
-
-        IsRunningCommand = true;
-
-        try
-        {
-            StaticUtils.RecordCommands(UniqueId, Command, ref currentCommandLine);
-            var trimmed = Command?.TrimEnd();
-            if (!string.IsNullOrWhiteSpace(trimmed))
-            {
-                // Local echo (optional)
-                await WriteToConsole($"> {trimmed}");
-            }
-
-            if (hubConnection == null || hubConnection.State != HubConnectionState.Connected)
-            {
-                await WriteToConsole("Hub not connected, cannot send command");
-            }
-            else
-            {
-                await hubConnection.InvokeAsync("RunCommand", UniqueId, Command);
-            }
-        }
-        catch (Exception ex)
-        {
-            await WriteToConsole(ex.Message);
-        }
-
-        IsRunningCommand = false;
-        Command = string.Empty;
-        StateHasChanged();
-    }
-
     async void Clear()
     {
-        Command = string.Empty;
-        StaticUtils.Clear(UniqueId);
-        await JSRuntime.InvokeAsync<object>("ClearTerm");
-        currentOutputIndex = 0;
-        currentCommandLine = 1;
-    }
-
-    int currentCommandLine;
-
-    void OnCommandKeydown(KeyboardEventArgs args)
-    {
-        if (args.Key == "Enter")
-        {
-            RunCommand();
-        }
-        else if (args.Key == "ArrowUp")
-        {
-            var result = StaticUtils.GetPreCommand(UniqueId, ref currentCommandLine);
-            if (result.Successful)
-            {
-                Command = result.CommandStr;
-            }
-        }
-        else if (args.Key == "ArrowDown")
-        {
-            var result = StaticUtils.GetNextCommand(UniqueId, ref currentCommandLine);
-            if (result.Successful)
-            {
-                Command = result.CommandStr;
-            }
-        }
+        await JSRuntime.InvokeVoidAsync("websshTerm.clear");
     }
 
     int currentOutputIndex;
 
-    async Task WriteToConsole(string messageToWrite, bool addNewLine = true)
+    // Legacy StaticUtils console buffering removed for xterm direct streaming.
+
+    [JSInvokable]
+    public Task SendInput(string data)
     {
-        StaticUtils.AddOutputString(UniqueId, addNewLine ? (Constants.NewLineForShell + messageToWrite + Constants.NewLineForShell) : messageToWrite);
-
-        await JSRuntime.InvokeAsync<object>("WriteToTerm", StaticUtils.GetOutputString(UniqueId, ref currentOutputIndex));
-    }
-
-    async void WriteToConsole()
-    {
-        await JSRuntime.InvokeAsync<object>("ClearTerm");
-
-        currentOutputIndex = 0;
-
-        await JSRuntime.InvokeAsync<object>("WriteToTerm", StaticUtils.GetOutputString(UniqueId, ref currentOutputIndex));
+        if (hubConnection?.State == HubConnectionState.Connected)
+        {
+            return hubConnection.InvokeAsync("SendInput", UniqueId, data);
+        }
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
@@ -214,5 +117,6 @@
             }
             catch { }
         }
+        dotNetRef?.Dispose();
     }
 }

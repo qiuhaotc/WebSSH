@@ -7,19 +7,19 @@ function ShowNotLogin(message) {
     alert(message);
 }
 
-Terminal.applyAddon(fit);
-var term = new Terminal();
+// Terminal.applyAddon(fit);
+// var term = new Terminal();
 
-function StartTerm(id) {
-    term.open(document.getElementById(id));
-    term.fit();
-}
+// function StartTerm(id) {
+//     term.open(document.getElementById(id));
+//     term.fit();
+// }
 
-function WriteToTerm(content) {
-    if (term !== null) {
-        term.write(content);
-    }
-}
+// function WriteToTerm(content) {
+//     if (term !== null) {
+//         term.write(content);
+//     }
+// }
 
 function ClearTerm() {
     if (term !== null) {
