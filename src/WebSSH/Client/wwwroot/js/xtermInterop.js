@@ -103,7 +103,7 @@ window.websshTerm = (function () {
   function setupAutoResize(container) {
     function adjust() {
       const top = container.getBoundingClientRect().top;
-      const h = window.innerHeight - top - 20; // 20px bottom padding
+      const h = window.innerHeight - top - 40; // 20px bottom padding
       if (h > 100) container.style.height = h + 'px';
       refit();
     }
