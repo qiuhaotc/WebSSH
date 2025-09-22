@@ -13,7 +13,6 @@ const offlineAssetsExclude = [/^service-worker\.js$/];
 
 async function onInstall(event) {
     console.info('Service worker: Install');
-    self.skipWaiting(); // Force the waiting service worker to become the active service worker.
 
     // Fetch and cache all matching items from the assets manifest
     const assetsRequests = self.assetsManifest.assets
@@ -25,7 +24,6 @@ async function onInstall(event) {
 
 async function onActivate(event) {
     console.info('Service worker: Activate');
-    await self.clients.claim(); // Become the service worker for clients that are not yet controlled.
 
     // Delete unused caches
     const cacheKeys = await caches.keys();
@@ -35,24 +33,16 @@ async function onActivate(event) {
 }
 
 async function onFetch(event) {
-    if (event.request.method !== 'GET') {
-        return;
+    let cachedResponse = null;
+    if (event.request.method === 'GET') {
+        // For all navigation requests, try to serve index.html from cache
+        // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
+        const shouldServeIndexHtml = event.request.mode === 'navigate';
+
+        const request = shouldServeIndexHtml ? 'index.html' : event.request;
+        const cache = await caches.open(cacheName);
+        cachedResponse = await cache.match(request);
     }
 
-    // For navigation requests, try network first, then cache.
-    if (event.request.mode === 'navigate') {
-        try {
-            const networkResponse = await fetch(event.request);
-            if (networkResponse.ok) {
-                return networkResponse;
-            }
-        } catch (error) {
-            // Network request failed, fall back to cache.
-            console.info('Service worker: Network request failed, falling back to cache for navigation.', error);
-        }
-    }
-
-    const cache = await caches.open(cacheName);
-    const cachedResponse = await cache.match(event.request);
     return cachedResponse || fetch(event.request);
 }
