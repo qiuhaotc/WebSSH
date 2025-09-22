@@ -45,38 +45,37 @@
                     _ = JSRuntime.InvokeVoidAsync("websshTerm.write", output);
                 });
 
-                hubConnection.Reconnecting += error =>
+                hubConnection.Reconnecting += async error =>
                 {
                     connectionStatus = "Reconnecting";
                     _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Connection lost, reconnecting... {error?.Message}\r\n");
-                    InvokeAsync(StateHasChanged);
-                    return Task.CompletedTask;
+                    await InvokeAsync(StateHasChanged);
                 };
 
-                hubConnection.Reconnected += id =>
+                hubConnection.Reconnected += async id =>
                 {
                     connectionStatus = "Connected";
                     _ = JSRuntime.InvokeVoidAsync("websshTerm.write", "\r\n[client] Reconnected.\r\n");
-                    InvokeAsync(StateHasChanged);
-                    return Task.CompletedTask;
+                    await InvokeAsync(StateHasChanged);
                 };
 
-                hubConnection.Closed += error =>
+                hubConnection.Closed += async error =>
                 {
                     connectionStatus = "Disconnected";
                     _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Connection closed: {error?.Message}\r\n");
-                    InvokeAsync(StateHasChanged);
-                    return Task.CompletedTask;
+                    await InvokeAsync(StateHasChanged);
                 };
 
                 await hubConnection.StartAsync();
                 await hubConnection.InvokeAsync("JoinShell", UniqueId);
                 connectionStatus = "Connected";
+                await InvokeAsync(StateHasChanged);
             }
             catch (Exception ex)
             {
                 await JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] {ex.Message}\r\n");
                 connectionStatus = "Error";
+                await InvokeAsync(StateHasChanged);
             }
         }
 

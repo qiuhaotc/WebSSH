@@ -27,5 +27,29 @@
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>
     <script src="js/main.js"></script>
+    <script>
+        // Listen for service worker version broadcasts
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                if (event.data && event.data.type === 'SW_VERSION') {
+                    const newVersion = event.data.version;
+                    const stored = localStorage.getItem('sw_version');
+                    if (stored && stored !== newVersion) {
+                        const answer = confirm('有新版本可用，是否立即刷新?');
+                        if (answer) {
+                            // Ask waiting worker to activate then reload
+                            navigator.serviceWorker.getRegistration().then(reg => {
+                                if (reg && reg.waiting) {
+                                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                                setTimeout(() => location.reload(true), 200);
+                            });
+                        }
+                    }
+                    localStorage.setItem('sw_version', newVersion);
+                }
+            });
+        }
+    </script>
 </body>
 </html>

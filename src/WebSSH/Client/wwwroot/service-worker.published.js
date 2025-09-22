@@ -4,7 +4,18 @@
 self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
-self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+// Use stale-while-revalidate for faster loads and background update
+self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') return;
+    event.respondWith(staleWhileRevalidate(event));
+});
+
+// Allow client to send {type:'SKIP_WAITING'} to activate new SW immediately
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
@@ -32,17 +43,33 @@ async function onActivate(event) {
         .map(key => caches.delete(key)));
 }
 
-async function onFetch(event) {
-    let cachedResponse = null;
-    if (event.request.method === 'GET') {
-        // For all navigation requests, try to serve index.html from cache
-        // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
-        const shouldServeIndexHtml = event.request.mode === 'navigate';
+async function staleWhileRevalidate(event) {
+    const request = event.request.mode === 'navigate' ? new Request('index.html') : event.request;
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+    const fetchPromise = fetch(event.request)
+        .then(async response => {
+            try {
+                if (response.ok && shouldCache(request)) {
+                    await cache.put(request, response.clone());
+                    // Notify clients that an update might be available
+                    broadcastVersion();
+                }
+            } catch { }
+            return response;
+        })
+        .catch(() => cached); // if offline use cached
+    return cached || fetchPromise;
+}
 
-        const request = shouldServeIndexHtml ? 'index.html' : event.request;
-        const cache = await caches.open(cacheName);
-        cachedResponse = await cache.match(request);
+function shouldCache(request) {
+    const url = typeof request === 'string' ? request : request.url;
+    return offlineAssetsInclude.some(p => p.test(url)) && !offlineAssetsExclude.some(p => p.test(url));
+}
+
+async function broadcastVersion() {
+    const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+    for (const client of allClients) {
+        client.postMessage({ type: 'SW_VERSION', version: self.assetsManifest.version });
     }
-
-    return cachedResponse || fetch(event.request);
 }
