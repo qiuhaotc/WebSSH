@@ -1,6 +1,7 @@
 // Resilient xterm interop: supports delayed loading / CDN failure fallback
 window.websshTerm = (function () {
   let term;
+  let fitAddon;
   let dotnetRef;
   let opened = false;
   let pendingWrites = [];
@@ -13,10 +14,13 @@ window.websshTerm = (function () {
         term = new Terminal({
           convertEol: true,
           cursorBlink: true,
-            scrollback: 5000,
+          scrollback: 5000,
           fontFamily: 'monospace',
           fontSize: 14
         });
+        if (window.FitAddon?.FitAddon) {
+          try { fitAddon = new window.FitAddon.FitAddon(); term.loadAddon(fitAddon); } catch {}
+        }
       }
       callback();
       return;
@@ -75,6 +79,8 @@ window.websshTerm = (function () {
         opened = true;
         bindData();
         term.focus();
+        setupAutoResize(el);
+        if (fitAddon) { try { fitAddon.fit(); } catch {} }
         if (pendingWrites.length) {
           pendingWrites.forEach(w => term.write(w));
           pendingWrites = [];
@@ -93,6 +99,20 @@ window.websshTerm = (function () {
   }
 
   function clear() { if (term && opened) term.clear(); }
+  function refit() { if (fitAddon && opened) { try { fitAddon.fit(); } catch {} } }
+  function setupAutoResize(container) {
+    function adjust() {
+      const top = container.getBoundingClientRect().top;
+      const h = window.innerHeight - top - 20; // 20px bottom padding
+      if (h > 100) container.style.height = h + 'px';
+      refit();
+    }
 
-  return { init, write, clear };
+    window.removeEventListener('resize', adjust);
+    window.addEventListener('resize', adjust);
+    // MutationObserver optional if layout shifts
+    adjust();
+  }
+
+  return { init, write, clear, refit };
 })();

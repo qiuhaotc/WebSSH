@@ -21,8 +21,8 @@ function ShowNotLogin(message) {
 //     }
 // }
 
-function ClearTerm() {
-    if (term !== null) {
-        term.reset();
-    }
-}
+// function ClearTerm() {
+//     if (term !== null) {
+//         term.reset();
+//     }
+// }
