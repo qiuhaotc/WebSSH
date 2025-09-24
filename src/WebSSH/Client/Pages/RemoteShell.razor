@@ -32,8 +32,8 @@
                 <div class="card-body">
                     <div class="form-group mb-3">
                         <label for="remotePath">Remote Path:</label>
-                        <input type="text" id="remotePath" class="form-control" @bind="remotePath" placeholder="~/"/>
-                        <small class="form-text text-muted">Specify the remote directory path (e.g., ~/ for home directory)</small>
+                        <input type="text" id="remotePath" class="form-control" @bind="remotePath" placeholder="/"/>
+                        <small class="form-text text-muted">Specify the remote directory path (e.g., / for root directory, /home/user for user directory)</small>
                     </div>
                     <div class="form-group mb-3">
                         <label for="fileInput">Select Files:</label>
@@ -89,7 +89,7 @@
 
     // File upload properties
     private bool showFileUpload = false;
-    private string remotePath = "~/";
+    private string remotePath = "/";
     private List<IBrowserFile> selectedFiles = new();
     private bool isUploading = false;
     private string uploadStatus = "";
@@ -210,18 +210,26 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<ServerResponse<FileUploadResult>>();
-                if (result?.Response != null)
+                if (result?.StausResult == StausResult.Successful && result.Response != null)
                 {
                     uploadStatus = $"Upload completed: {result.Response.SuccessfulUploads}/{result.Response.TotalFiles} files uploaded successfully";
+                    
+                    // Show individual file errors if any
+                    var failedFiles = result.Response.UploadedFiles.Where(f => !f.Success).ToList();
+                    if (failedFiles.Any())
+                    {
+                        uploadStatus += $"\n\nErrors:\n{string.Join("\n", failedFiles.Select(f => $"• {f.FileName}: {f.ErrorMessage}"))}";
+                    }
                 }
                 else
                 {
-                    uploadStatus = "Upload completed but no details available";
+                    uploadStatus = $"Upload failed: {result?.ExtraMessage ?? "Unknown error occurred"}";
                 }
             }
             else
             {
-                uploadStatus = $"Upload failed: HTTP {response.StatusCode}";
+                var errorContent = await response.Content.ReadAsStringAsync();
+                uploadStatus = $"Upload failed: HTTP {response.StatusCode} - {errorContent}";
             }
         }
         catch (Exception ex)

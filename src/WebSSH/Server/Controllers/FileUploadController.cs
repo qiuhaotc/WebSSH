@@ -28,7 +28,7 @@ namespace WebSSH.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<ServerResponse<FileUploadResult>> UploadFiles(Guid uniqueId, List<IFormFile> files, string remotePath = "~/")
+        public async Task<ServerResponse<FileUploadResult>> UploadFiles(Guid uniqueId, List<IFormFile> files)
         {
             var response = new ServerResponse<FileUploadResult> { StausResult = StausResult.Successful };
             
@@ -55,6 +55,9 @@ namespace WebSSH.Server.Controllers
                     response.ExtraMessage = "No files provided";
                     return response;
                 }
+
+                // Get the remote path from form data, default to root if not provided
+                var remotePath = HttpContext.Request.Form["remotePath"].FirstOrDefault() ?? "/";
 
                 // Get the SSH client for the session
                 var sshClient = ShellPool.GetSshClient(sessionId, uniqueId);
