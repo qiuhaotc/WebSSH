@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSSH File Upload Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .shell-output { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 15px; min-height: 300px; border-radius: 4px; }
+        .demo-highlight { background: rgba(255, 255, 0, 0.1); border-left: 3px solid #ffd700; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <h2>WebSSH File Upload Feature Demo</h2>
+        <p class="text-muted">This demonstrates the new file upload functionality added to the SSH shell interface.</p>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Shell Interface</h3>
+                <div class="shell-output mb-2">
+                    user@remote:~$ ls -la<br>
+                    total 12<br>
+                    drwxr-xr-x 3 user user 4096 Dec 19 10:30 .<br>
+                    drwxr-xr-x 3 user user 4096 Dec 19 10:25 ..<br>
+                    -rw-r--r-- 1 user user  220 Dec 19 10:25 .bash_logout<br>
+                    -rw-r--r-- 1 user user 3526 Dec 19 10:25 .bashrc<br>
+                    user@remote:~$ <span style="background: #333; color: #fff;">█</span>
+                </div>
+                <div class="small text-muted">
+                    Connection: Connected
+                    <button class="btn btn-sm btn-secondary ms-2">Clear</button>
+                    <button class="btn btn-sm btn-info ms-2" id="fileUploadBtn">File Upload</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4 demo-highlight" id="uploadSection" style="display: none;">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📁 Upload Files to Remote Server</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label for="remotePath">Remote Path:</label>
+                            <input type="text" id="remotePath" class="form-control" value="~/" placeholder="~/"/>
+                            <small class="form-text text-muted">Specify the remote directory path (e.g., ~/ for home directory)</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="fileInput">Select Files:</label>
+                            <input type="file" id="fileInput" multiple class="form-control" accept="*/*" />
+                            <small class="form-text text-muted">You can select multiple files to upload</small>
+                        </div>
+                        <div class="mb-3" id="fileList" style="display: none;">
+                            <h6>Selected Files (3):</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>📄 document.pdf</span>
+                                    <small>2.5 MB</small>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>📜 script.sh</span>
+                                    <small>1.2 KB</small>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>⚙️ config.json</span>
+                                    <small>856 B</small>
+                                </li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary" id="uploadBtn">
+                            <span id="uploadIcon">📤</span> Upload Files
+                        </button>
+                        <div class="alert alert-info mt-3" id="uploadStatus" style="display: none;">
+                            <strong>Upload Progress:</strong><br>
+                            ✅ document.pdf uploaded successfully<br>
+                            ✅ script.sh uploaded successfully<br>
+                            ✅ config.json uploaded successfully<br>
+                            <span class="text-success"><strong>Upload completed: 3/3 files uploaded successfully</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h4>🚀 Key Features Implemented:</h4>
+                <ul class="list-group">
+                    <li class="list-group-item">✅ <strong>Multiple File Upload:</strong> Users can select and upload multiple files simultaneously</li>
+                    <li class="list-group-item">✅ <strong>Remote Path Configuration:</strong> Specify the destination directory on the remote server</li>
+                    <li class="list-group-item">✅ <strong>Real-time Progress:</strong> Live updates via SignalR during the upload process</li>
+                    <li class="list-group-item">✅ <strong>File Size Display:</strong> Shows readable file sizes for selected files</li>
+                    <li class="list-group-item">✅ <strong>SFTP Integration:</strong> Uses SSH.NET's SFTP client for secure file transfers</li>
+                    <li class="list-group-item">✅ <strong>Error Handling:</strong> Comprehensive error reporting and status messages</li>
+                    <li class="list-group-item">✅ <strong>Session Integration:</strong> Reuses existing SSH connections for file transfers</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('fileUploadBtn').addEventListener('click', function() {
+            const section = document.getElementById('uploadSection');
+            const fileList = document.getElementById('fileList');
+            
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                this.textContent = 'Hide Upload';
+                this.className = 'btn btn-sm btn-warning ms-2';
+                // Show demo files
+                fileList.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+                this.textContent = 'File Upload';
+                this.className = 'btn btn-sm btn-info ms-2';
+            }
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            const button = this;
+            const status = document.getElementById('uploadStatus');
+            const icon = document.getElementById('uploadIcon');
+            
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Uploading...';
+            button.disabled = true;
+            
+            setTimeout(function() {
+                status.style.display = 'block';
+                button.innerHTML = '<span id="uploadIcon">✅</span> Upload Complete';
+                button.disabled = false;
+                button.className = 'btn btn-success';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
