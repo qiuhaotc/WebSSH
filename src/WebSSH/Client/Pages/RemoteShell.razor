@@ -5,6 +5,9 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Net.Http.Headers
+@using System.IO
+@using System.Text.Json
+@using Microsoft.JSInterop
 @implements IAsyncDisposable
 
 <h3>Shell</h3>
@@ -24,6 +27,13 @@
                     @onclick="@(() => SwitchTab("upload"))" 
                     type="button" role="tab">
                 Upload Files
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "download" ? "active" : "")" 
+                    @onclick="@(() => SwitchTab("download"))" 
+                    type="button" role="tab">
+                Download Files
             </button>
         </li>
     </ul>
@@ -101,6 +111,130 @@
                 </div>
             </div>
         </div>
+
+        <!-- Download Files Tab -->
+        <div class="tab-pane fade @(activeTab == "download" ? "show active" : "")">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Download Files from Remote Server</h5>
+                            <small class="text-muted">
+                                Limits: Max 3 files per download, 50MB total size, 20 downloads per hour
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label for="browsePath">Browse Path:</label>
+                                <div class="input-group">
+                                    <input type="text" id="browsePath" class="form-control" @bind="browsePath" placeholder="/" />
+                                    <button class="btn btn-outline-secondary" @onclick="BrowseFiles" disabled="@isLoadingFiles">
+                                        @if (isLoadingFiles)
+                                        {
+                                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>Browse</span>
+                                        }
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">Enter the path to browse remote files (e.g., / for root directory)</small>
+                            </div>
+
+                            @if (remoteFiles != null && remoteFiles.Count > 0)
+                            {
+                                <div class="mb-3">
+                                    <h6>Select Files to Download:</h6>
+                                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                                        <table class="table table-sm table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                            <thead class="table-light sticky-top">
+                                                <tr>
+                                                    <th width="80" class="text-center">Select</th>
+                                                    <th style="min-width: 150px; width: auto;">Name</th>
+                                                    <th width="100" class="text-end">Size</th>
+                                                    <th width="180" class="text-center">Modified</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var file in remoteFiles)
+                                                {
+                                                    <tr class="@(file.IsDirectory ? "table-secondary" : "")" @ondblclick="@(() => { if (file.IsDirectory && file.Name != "..") NavigateToDirectory(file.FullPath); })">
+                                                        <td class="text-center" style="vertical-align: middle;">
+                                                            @if (!file.IsDirectory)
+                                                            {
+                                                                <input type="checkbox" 
+                                                                       @onchange="@((e) => ToggleFileSelection(file, (bool)e.Value))" 
+                                                                       checked="@selectedFilesForDownload.Contains(file.FullPath)" />
+                                                            }
+                                                            else if (file.Name != "..")
+                                                            {
+                                                                <button class="btn btn-sm btn-link p-0" 
+                                                                        @onclick="@(() => NavigateToDirectory(file.FullPath))">
+                                                                    📁
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <button class="btn btn-sm btn-link p-0" 
+                                                                        @onclick="@(() => NavigateToParentDirectory())">
+                                                                    ⬆️
+                                                                </button>
+                                                            }
+                                                        </td>
+                                                        <td style="vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                            <span class="@(file.IsDirectory ? "fw-bold" : "")" style="font-family: 'Courier New', monospace;" title="@(file.IsDirectory ? "📁 " + file.Name : file.Name)">
+                                                                @(file.IsDirectory ? "📁 " + file.Name : file.Name)
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-end" style="vertical-align: middle;">@(file.IsDirectory ? "-" : FormatFileSize(file.Size))</td>
+                                                        <td class="text-center" style="font-family: 'Courier New', monospace; vertical-align: middle;">@file.LastModified.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (selectedFilesForDownload.Count > 0)
+                            {
+                                <div class="mb-3">
+                                    <h6>Selected Files (@selectedFilesForDownload.Count):</h6>
+                                    <ul class="list-group">
+                                        @foreach (var filePath in selectedFilesForDownload)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>@Path.GetFileName(filePath)</span>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="@(() => RemoveFileSelection(filePath))">×</button>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                                <button class="btn btn-success" @onclick="DownloadFiles" disabled="@isDownloading">
+                                    @if (isDownloading)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        <span>Downloading...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Download Selected Files</span>
+                                    }
+                                </button>
+                            }
+
+                            @if (!string.IsNullOrEmpty(downloadStatus))
+                            {
+                                <div class="alert @(downloadStatus.Contains("Error") || downloadStatus.Contains("failed") ? "alert-danger" : "alert-info") mt-3" style="white-space: pre-line;">
+                                    @downloadStatus
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -121,6 +255,14 @@
     private List<IBrowserFile> selectedFiles = new();
     private bool isUploading = false;
     private string uploadStatus = "";
+
+    // File download properties
+    private string browsePath = "/";
+    private List<RemoteFileInfo> remoteFiles = new();
+    private List<string> selectedFilesForDownload = new();
+    private bool isDownloading = false;
+    private bool isLoadingFiles = false;
+    private string downloadStatus = "";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -146,6 +288,15 @@
                     _ = InvokeAsync(() =>
                     {
                         uploadStatus = status;
+                        StateHasChanged();
+                    });
+                });
+
+                hubConnection.On<string>("FileDownloadStatus", (status) =>
+                {
+                    _ = InvokeAsync(() =>
+                    {
+                        downloadStatus = status;
                         StateHasChanged();
                     });
                 });
@@ -325,6 +476,170 @@
             len = len / 1024;
         }
         return $"{len:0.##} {sizes[order]}";
+    }
+
+    // Download functionality methods
+    private async Task BrowseFiles()
+    {
+        isLoadingFiles = true;
+        downloadStatus = "";
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.GetAsync($"/api/FileDownload/ListFiles?uniqueId={UniqueId}&path={Uri.EscapeDataString(browsePath)}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ServerResponse<List<RemoteFileInfo>>>();
+                if (result?.StausResult == StausResult.Successful && result.Response != null)
+                {
+                    remoteFiles = result.Response;
+                    downloadStatus = $"Found {remoteFiles.Count} items";
+                }
+                else
+                {
+                    downloadStatus = $"Error: {result?.ExtraMessage ?? "Unknown error"}";
+                    remoteFiles.Clear();
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                downloadStatus = $"Error: HTTP {response.StatusCode} - {errorContent}";
+                remoteFiles.Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            downloadStatus = $"Error browsing files: {ex.Message}";
+            remoteFiles.Clear();
+        }
+        finally
+        {
+            isLoadingFiles = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleFileSelection(RemoteFileInfo file, bool selected)
+    {
+        if (selected)
+        {
+            if (!selectedFilesForDownload.Contains(file.FullPath))
+            {
+                if (selectedFilesForDownload.Count < 3) // Match the MaxFilesPerDownload limit
+                {
+                    selectedFilesForDownload.Add(file.FullPath);
+                }
+                else
+                {
+                    downloadStatus = "Error: Maximum 3 files allowed per download.";
+                }
+            }
+        }
+        else
+        {
+            selectedFilesForDownload.Remove(file.FullPath);
+        }
+        StateHasChanged();
+    }
+
+    private void RemoveFileSelection(string filePath)
+    {
+        selectedFilesForDownload.Remove(filePath);
+        StateHasChanged();
+    }
+
+    private async Task NavigateToDirectory(string path)
+    {
+        browsePath = path.EndsWith('/') ? path : path + "/";
+        await BrowseFiles();
+    }
+
+    private async Task NavigateToParentDirectory()
+    {
+        if (browsePath != "/")
+        {
+            var parentPath = Path.GetDirectoryName(browsePath.TrimEnd('/'));
+            browsePath = string.IsNullOrEmpty(parentPath) ? "/" : parentPath.Replace('\\', '/');
+            if (!browsePath.EndsWith('/'))
+                browsePath += "/";
+        }
+        await BrowseFiles();
+    }
+
+    private async Task DownloadFiles()
+    {
+        if (selectedFilesForDownload.Count == 0)
+            return;
+
+        isDownloading = true;
+        downloadStatus = "Preparing download...";
+        StateHasChanged();
+
+        try
+        {
+            await hubConnection.InvokeAsync("NotifyFileDownloadStart", UniqueId, selectedFilesForDownload.Count);
+
+            var request = new FileDownloadRequest
+            {
+                FilePaths = selectedFilesForDownload.ToList()
+            };
+
+            var response = await Http.PostAsJsonAsync($"/api/FileDownload/DownloadFiles?uniqueId={UniqueId}", request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var fileName = "download.zip";
+                
+                // Try to get filename from Content-Disposition header if available
+                if (response.Content.Headers.ContentDisposition?.FileName != null)
+                {
+                    fileName = response.Content.Headers.ContentDisposition.FileName.Trim('"');
+                }
+
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+                }
+                catch (JSException jsEx)
+                {
+                    // Fallback: try to create a download link directly
+                    var base64 = Convert.ToBase64String(fileBytes);
+                    await JSRuntime.InvokeVoidAsync("eval", $@"
+                        try {{
+                            const link = document.createElement('a');
+                            link.download = '{fileName}';
+                            link.href = 'data:application/octet-stream;base64,{base64}';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }} catch (error) {{
+                            alert('Download failed: ' + error.message);
+                        }}
+                    ");
+                }
+                
+                downloadStatus = "Download completed successfully!";
+                selectedFilesForDownload.Clear();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                downloadStatus = $"Error: HTTP {response.StatusCode} - {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            downloadStatus = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+            StateHasChanged();
+        }
     }
 
     // Legacy StaticUtils console buffering removed for xterm direct streaming.
