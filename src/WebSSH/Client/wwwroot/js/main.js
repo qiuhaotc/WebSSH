@@ -26,3 +26,13 @@ function ShowNotLogin(message) {
 //         term.reset();
 //     }
 // }
+
+// File download functionality
+window.downloadFile = (filename, base64Content) => {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = `data:application/octet-stream;base64,${base64Content}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
