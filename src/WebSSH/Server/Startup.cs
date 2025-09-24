@@ -26,6 +26,18 @@ namespace WebSSH.Server
         {
             services.AddDistributedMemoryCache();
 
+            services.AddMemoryCache(options =>
+            {
+                // 设置缓存的最大条目数
+                options.SizeLimit = 5000;
+
+                // 设置缓存压缩百分比（当达到大小限制时，移除的缓存项的百分比）
+                options.CompactionPercentage = 0.2; // 20%
+
+                // 设置过期项的扫描频率
+                options.ExpirationScanFrequency = TimeSpan.FromMinutes(10);
+            });
+
             services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromMinutes(60);

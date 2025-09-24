@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
 using Renci.SshNet;
 using WebSSH.Shared;
 using WebSSH.Server.Hubs;
+using WebSSH.Server.Extensions;
 
 namespace WebSSH.Server.Controllers
 {
@@ -20,17 +22,23 @@ namespace WebSSH.Server.Controllers
     {
         public ShellPool ShellPool { get; }
         public IHubContext<ShellHub> HubContext { get; }
+        public ShellConfiguration ShellConfiguration { get; }
+        public IMemoryCache MemoryCache { get; }
 
-        public FileUploadController(ShellPool shellPool, IHubContext<ShellHub> hubContext)
+        public FileUploadController(ShellPool shellPool, IHubContext<ShellHub> hubContext, 
+            ShellConfiguration shellConfiguration, IMemoryCache memoryCache)
         {
             ShellPool = shellPool;
             HubContext = hubContext;
+            ShellConfiguration = shellConfiguration;
+            MemoryCache = memoryCache;
         }
 
         [HttpPost]
         public async Task<ServerResponse<FileUploadResult>> UploadFiles(Guid uniqueId, List<IFormFile> files)
         {
             var response = new ServerResponse<FileUploadResult> { StausResult = StausResult.Successful };
+            var groupName = "";
             
             try
             {
@@ -42,10 +50,13 @@ namespace WebSSH.Server.Controllers
                     return response;
                 }
 
+                groupName = ShellHub.BuildGroup(sessionId, uniqueId);
+
                 if (!ShellPool.IsConnected(sessionId, uniqueId))
                 {
                     response.StausResult = StausResult.Failed;
                     response.ExtraMessage = "Shell not connected";
+                    await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", "Error: Shell not connected");
                     return response;
                 }
 
@@ -53,6 +64,50 @@ namespace WebSSH.Server.Controllers
                 {
                     response.StausResult = StausResult.Failed;
                     response.ExtraMessage = "No files provided";
+                    await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", "Error: No files provided");
+                    return response;
+                }
+
+                // Validate file count
+                if (files.Count > ShellConfiguration.MaxFilesPerUpload)
+                {
+                    response.StausResult = StausResult.Failed;
+                    response.ExtraMessage = $"Too many files. Maximum {ShellConfiguration.MaxFilesPerUpload} files allowed per upload";
+                    await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", 
+                        $"Error: Too many files. Maximum {ShellConfiguration.MaxFilesPerUpload} files allowed per upload");
+                    return response;
+                }
+
+                // Validate file sizes
+                var maxSizeBytes = ShellConfiguration.MaxFileSizeMB * 1024 * 1024;
+                var oversizedFiles = files.Where(f => f.Length > maxSizeBytes).ToList();
+                if (oversizedFiles.Any())
+                {
+                    response.StausResult = StausResult.Failed;
+                    response.ExtraMessage = $"File(s) too large: {string.Join(", ", oversizedFiles.Select(f => f.FileName))}. Maximum size: {ShellConfiguration.MaxFileSizeMB}MB";
+                    await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", 
+                        $"Error: File(s) too large: {string.Join(", ", oversizedFiles.Select(f => f.FileName))}. Maximum size: {ShellConfiguration.MaxFileSizeMB}MB");
+                    return response;
+                }
+
+                // Check IP-based rate limiting
+                var clientIp = HttpContext.GetRealIpAddress();
+                var cacheKey = $"upload_count_{clientIp}";
+                var currentHour = DateTime.UtcNow.ToString("yyyyMMddHH");
+                var hourlyKey = $"{cacheKey}_{currentHour}";
+
+                var currentUploads = MemoryCache.GetOrCreate(hourlyKey, entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+                    return 0;
+                });
+
+                if (currentUploads + files.Count > ShellConfiguration.MaxFilesPerHour)
+                {
+                    response.StausResult = StausResult.Failed;
+                    response.ExtraMessage = $"Upload limit exceeded. Maximum {ShellConfiguration.MaxFilesPerHour} files per hour allowed. Current: {currentUploads}";
+                    await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", 
+                        $"Error: Upload limit exceeded. Maximum {ShellConfiguration.MaxFilesPerHour} files per hour allowed. You have uploaded {currentUploads} files this hour");
                     return response;
                 }
 
@@ -65,11 +120,11 @@ namespace WebSSH.Server.Controllers
                 {
                     response.StausResult = StausResult.Failed;
                     response.ExtraMessage = "SSH client not available";
+                    await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", "Error: SSH client not available");
                     return response;
                 }
 
                 var result = new FileUploadResult();
-                var groupName = ShellHub.BuildGroup(sessionId, uniqueId);
 
                 using (var sftpClient = new SftpClient(sshClient.ConnectionInfo))
                 {
@@ -115,8 +170,15 @@ namespace WebSSH.Server.Controllers
                     }
                 }
 
+                // Update the upload count in cache only if upload was successful
+                var successfulUploads = result.UploadedFiles.Count(f => f.Success);
+                if (successfulUploads > 0)
+                {
+                    MemoryCache.Set(hourlyKey, currentUploads + successfulUploads, TimeSpan.FromHours(1));
+                }
+
                 result.TotalFiles = files.Count;
-                result.SuccessfulUploads = result.UploadedFiles.Count(f => f.Success);
+                result.SuccessfulUploads = successfulUploads;
                 response.Response = result;
 
                 await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", $"Upload completed: {result.SuccessfulUploads}/{result.TotalFiles} files uploaded successfully");
@@ -126,10 +188,8 @@ namespace WebSSH.Server.Controllers
                 response.StausResult = StausResult.Exception;
                 response.ExtraMessage = ex.Message;
                 
-                var sessionId = HttpContext.Session.GetString(Constants.ClientSessionIdName);
-                if (!string.IsNullOrEmpty(sessionId))
+                if (!string.IsNullOrEmpty(groupName))
                 {
-                    var groupName = ShellHub.BuildGroup(sessionId, uniqueId);
                     await HubContext.Clients.Group(groupName).SendAsync("FileUploadStatus", $"Upload failed: {ex.Message}");
                 }
             }

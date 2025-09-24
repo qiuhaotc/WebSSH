@@ -9,74 +9,100 @@
 
 <h3>Shell</h3>
 
-<div class="row">
-    <div class="col-md-12">
-        <div id="ShellOutput" style="width:100%;height:60vh; background:#000; color:#fff;"></div>
-        <div class="mt-2 small text-muted">Connection: @connectionStatus
-            <button class="btn btn-sm btn-secondary ms-2" @onclick="Clear">Clear</button>
-            <button class="btn btn-sm @(showFileUpload ? "btn-warning" : "btn-info") ms-2" @onclick="ToggleFileUpload">
-                @(showFileUpload ? "Hide Upload" : "File Upload")
+<div class="container-fluid">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" id="shellTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "console" ? "active" : "")" 
+                    @onclick="() => SwitchTab(\"console\")" 
+                    type="button" role="tab">
+                Shell Console
             </button>
-        </div>
-    </div>
-</div>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "upload" ? "active" : "")" 
+                    @onclick="() => SwitchTab(\"upload\")" 
+                    type="button" role="tab">
+                Upload Files
+            </button>
+        </li>
+    </ul>
 
-@if (showFileUpload)
-{
-    <div class="row mt-3">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Upload Files to Remote Server</h5>
+    <!-- Tab Content -->
+    <div class="tab-content mt-3">
+        <!-- Shell Console Tab -->
+        <div class="tab-pane fade @(activeTab == "console" ? "show active" : "")">
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="ShellOutput" style="width:100%;height:60vh; background:#000; color:#fff;"></div>
+                    <div class="mt-2 small text-muted">Connection: @connectionStatus
+                        <button class="btn btn-sm btn-secondary ms-2" @onclick="Clear">Clear</button>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="form-group mb-3">
-                        <label for="remotePath">Remote Path:</label>
-                        <input type="text" id="remotePath" class="form-control" @bind="remotePath" placeholder="/"/>
-                        <small class="form-text text-muted">Specify the remote directory path (e.g., / for root directory, /home/user for user directory)</small>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="fileInput">Select Files:</label>
-                        <InputFile id="fileInput" OnChange="OnFileSelected" multiple class="form-control" accept="*/*" />
-                        <small class="form-text text-muted">You can select multiple files to upload</small>
-                    </div>
-                    @if (selectedFiles != null && selectedFiles.Count > 0)
-                    {
-                        <div class="mb-3">
-                            <h6>Selected Files (@selectedFiles.Count):</h6>
-                            <ul class="list-group">
-                                @foreach (var file in selectedFiles)
-                                {
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span>@file.Name</span>
-                                        <small>@FormatFileSize(file.Size)</small>
-                                    </li>
-                                }
-                            </ul>
+            </div>
+        </div>
+
+        <!-- Upload Files Tab -->
+        <div class="tab-pane fade @(activeTab == "upload" ? "show active" : "")">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Upload Files to Remote Server</h5>
+                            <small class="text-muted">
+                                Limits: Max 3 files per upload, 10MB per file, 20 files per hour
+                            </small>
                         </div>
-                        <button class="btn btn-primary" @onclick="UploadFiles" disabled="@isUploading">
-                            @if (isUploading)
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label for="remotePath">Remote Path:</label>
+                                <input type="text" id="remotePath" class="form-control" @bind="remotePath" placeholder="/"/>
+                                <small class="form-text text-muted">Specify the remote directory path (e.g., / for root directory, /home/user for user directory)</small>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="fileInput">Select Files:</label>
+                                <InputFile id="fileInput" OnChange="OnFileSelected" multiple class="form-control" accept="*/*" />
+                                <small class="form-text text-muted">You can select up to 3 files to upload (max 10MB each)</small>
+                            </div>
+                            @if (selectedFiles != null && selectedFiles.Count > 0)
                             {
-                                <span class="spinner-border spinner-border-sm" role="status"></span>
-                                <span>Uploading...</span>
+                                <div class="mb-3">
+                                    <h6>Selected Files (@selectedFiles.Count):</h6>
+                                    <ul class="list-group">
+                                        @foreach (var file in selectedFiles)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>@file.Name</span>
+                                                <small>@FormatFileSize(file.Size)</small>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                                <button class="btn btn-primary" @onclick="UploadFiles" disabled="@isUploading">
+                                    @if (isUploading)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        <span>Uploading...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Upload Files</span>
+                                    }
+                                </button>
                             }
-                            else
+                            @if (!string.IsNullOrEmpty(uploadStatus))
                             {
-                                <span>Upload Files</span>
+                                <div class="alert @(uploadStatus.Contains("Error") || uploadStatus.Contains("failed") ? "alert-danger" : "alert-info") mt-3" style="white-space: pre-line;">
+                                    @uploadStatus
+                                </div>
                             }
-                        </button>
-                    }
-                    @if (!string.IsNullOrEmpty(uploadStatus))
-                    {
-                        <div class="alert alert-info mt-3">
-                            @uploadStatus
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-}
+</div>
 
 @code{
 
@@ -87,8 +113,10 @@
     string connectionStatus = "Initializing";
     DotNetObjectReference<RemoteShell> dotNetRef;
 
+    // Tab management
+    private string activeTab = "console";
+
     // File upload properties
-    private bool showFileUpload = false;
     private string remotePath = "/";
     private List<IBrowserFile> selectedFiles = new();
     private bool isUploading = false;
@@ -169,15 +197,35 @@
         await JSRuntime.InvokeVoidAsync("websshTerm.clear");
     }
 
-    void ToggleFileUpload()
+    void SwitchTab(string tab)
     {
-        showFileUpload = !showFileUpload;
+        activeTab = tab;
         StateHasChanged();
     }
 
     private void OnFileSelected(InputFileChangeEventArgs e)
     {
-        selectedFiles = e.GetMultipleFiles(20).ToList(); // Limit to 20 files
+        selectedFiles = e.GetMultipleFiles(3).ToList(); // Limit to 3 files as per configuration
+        
+        // Client-side validation
+        var maxSizeBytes = 10 * 1024 * 1024; // 10MB
+        var oversizedFiles = selectedFiles.Where(f => f.Size > maxSizeBytes).ToList();
+        
+        if (oversizedFiles.Any())
+        {
+            uploadStatus = $"Error: The following files are too large (max 10MB): {string.Join(", ", oversizedFiles.Select(f => f.Name))}";
+            selectedFiles = selectedFiles.Except(oversizedFiles).ToList();
+        }
+        else if (selectedFiles.Count > 3)
+        {
+            uploadStatus = "Error: Too many files selected. Maximum 3 files allowed per upload.";
+            selectedFiles = selectedFiles.Take(3).ToList();
+        }
+        else
+        {
+            uploadStatus = "";
+        }
+        
         StateHasChanged();
     }
 
@@ -185,6 +233,21 @@
     {
         if (selectedFiles == null || selectedFiles.Count == 0)
             return;
+
+        // Client-side validation before upload
+        if (selectedFiles.Count > 3)
+        {
+            uploadStatus = "Error: Maximum 3 files allowed per upload.";
+            return;
+        }
+
+        var maxSizeBytes = 10 * 1024 * 1024; // 10MB
+        var oversizedFiles = selectedFiles.Where(f => f.Size > maxSizeBytes).ToList();
+        if (oversizedFiles.Any())
+        {
+            uploadStatus = $"Error: Files too large (max 10MB): {string.Join(", ", oversizedFiles.Select(f => f.Name))}";
+            return;
+        }
 
         isUploading = true;
         uploadStatus = "Preparing upload...";
@@ -198,7 +261,7 @@
             
             foreach (var file in selectedFiles)
             {
-                var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 100 * 1024 * 1024)); // 100MB limit
+                var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10MB limit
                 streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
                 content.Add(streamContent, "files", file.Name);
             }
@@ -220,21 +283,27 @@
                     {
                         uploadStatus += $"\n\nErrors:\n{string.Join("\n", failedFiles.Select(f => $"• {f.FileName}: {f.ErrorMessage}"))}";
                     }
+                    
+                    // Clear selected files on success
+                    if (result.Response.SuccessfulUploads > 0)
+                    {
+                        selectedFiles.Clear();
+                    }
                 }
                 else
                 {
-                    uploadStatus = $"Upload failed: {result?.ExtraMessage ?? "Unknown error occurred"}";
+                    uploadStatus = $"Error: {result?.ExtraMessage ?? "Unknown error occurred"}";
                 }
             }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                uploadStatus = $"Upload failed: HTTP {response.StatusCode} - {errorContent}";
+                uploadStatus = $"Error: HTTP {response.StatusCode} - {errorContent}";
             }
         }
         catch (Exception ex)
         {
-            uploadStatus = $"Upload failed: {ex.Message}";
+            uploadStatus = $"Error: {ex.Message}";
         }
         finally
         {
