@@ -87,7 +87,7 @@ WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专�
 - **远程文件浏览**：导航和浏览远程目录结构
 - **多文件选择**：每次操作下载最多 3 个文件（可配置）
 - **ZIP 压缩支持**：多文件自动打包下载
-- **大小限制**：最大 50MB 总下载大小（可配置）
+- **大小限制**：最大 20MB 总下载大小（可配置）
 - **速率限制**：基于 IP 地址限制（每小时 20 次下载，可配置）
 - **实时进度**：通过 SignalR 显示实时下载状态
 
@@ -103,7 +103,7 @@ WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专�
     "MaxFileSizeMB": 10,
     "MaxFilesPerHour": 20,
     "MaxFilesPerDownload": 3,
-    "MaxDownloadSizeMB": 50,
+    "MaxDownloadSizeMB": 20,
     "MaxDownloadsPerHour": 20
   }
 }

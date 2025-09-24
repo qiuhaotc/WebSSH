@@ -87,7 +87,7 @@ WebSSH now supports secure file upload and download to/from remote servers via S
 - **Remote File Browser**: Navigate and browse remote directory structure
 - **Multi-file Selection**: Download up to 3 files per operation (configurable)
 - **ZIP Archive Support**: Multiple files automatically packaged for download
-- **Size Limits**: Maximum 50MB total download size (configurable)
+- **Size Limits**: Maximum 20MB total download size (configurable)
 - **Rate Limiting**: IP-based limiting (20 downloads per hour, configurable)
 - **Real-time Progress**: Live download status via SignalR
 
@@ -103,7 +103,7 @@ File transfer restrictions can be configured in `appsettings.json`:
     "MaxFileSizeMB": 10,
     "MaxFilesPerHour": 20,
     "MaxFilesPerDownload": 3,
-    "MaxDownloadSizeMB": 50,
+    "MaxDownloadSizeMB": 20,
     "MaxDownloadsPerHour": 20
   }
 }
