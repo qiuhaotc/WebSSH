@@ -110,7 +110,7 @@ File transfer restrictions can be configured in `appsettings.json`:
 ```
 
 ### Implementation Details
-📋 **[Complete Implementation Summary](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/implementation-summary.md)** - Detailed technical documentation of all changes, features, and architecture decisions made during development
+📋 **[Complete Implementation Summary](https://github.com/qiuhaotc/WebSSH/blob/master/docs/implementation-summary.md)** - Detailed technical documentation of all changes, features, and architecture decisions made during development
 
 ## Deployment Via Docker
 

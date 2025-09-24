@@ -110,7 +110,7 @@ WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专�
 ```
 
 ### 实现详情
-📋 **[完整实现摘要](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/implementation-summary.md)** - 详细的技术文档，包含开发过程中的所有更改、功能特性和架构决策
+📋 **[完整实现摘要](https://github.com/qiuhaotc/WebSSH/blob/master/docs/implementation-summary.md)** - 详细的技术文档，包含开发过程中的所有更改、功能特性和架构决策
 
 ## 通过 Docker 部署
 
