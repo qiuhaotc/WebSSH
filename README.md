@@ -71,11 +71,11 @@ Planned (roadmap ideas):
 * Audit log of executed commands
 * ~~Secure copy (SCP / SFTP) integration~~ ✅ **Completed**
 
-## File Upload Feature
+## File Transfer Features
 
-WebSSH now supports secure file upload to remote servers via SFTP with a professional tab-based interface:
+WebSSH now supports secure file upload and download to/from remote servers via SFTP with a professional tab-based interface:
 
-### Key Features
+### File Upload
 - **Tab-based Interface**: Separate tabs for Shell Console and File Upload
 - **Multiple File Support**: Upload up to 3 files simultaneously (configurable)
 - **File Size Limits**: Maximum 10MB per file (configurable)
@@ -83,17 +83,28 @@ WebSSH now supports secure file upload to remote servers via SFTP with a profess
 - **Real-time Progress**: Live upload status via SignalR
 - **SFTP Integration**: Secure transfer using existing SSH connections
 
+### File Download
+- **Remote File Browser**: Navigate and browse remote directory structure
+- **Multi-file Selection**: Download up to 3 files per operation (configurable)
+- **ZIP Archive Support**: Multiple files automatically packaged for download
+- **Size Limits**: Maximum 50MB total download size (configurable)
+- **Rate Limiting**: IP-based limiting (20 downloads per hour, configurable)
+- **Real-time Progress**: Live download status via SignalR
+
 ### Live Demo
-🎯 **[Interactive Demo](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - Try the file upload interface
+🎯 **[Interactive Demo](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - Try the file upload/download interface
 
 ### Configuration
-Upload restrictions can be configured in `appsettings.json`:
+File transfer restrictions can be configured in `appsettings.json`:
 ```json
 {
   "ShellConfiguration": {
     "MaxFilesPerUpload": 3,
     "MaxFileSizeMB": 10,
-    "MaxFilesPerHour": 20
+    "MaxFilesPerHour": 20,
+    "MaxFilesPerDownload": 3,
+    "MaxDownloadSizeMB": 50,
+    "MaxDownloadsPerHour": 20
   }
 }
 ```

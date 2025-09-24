@@ -71,11 +71,11 @@ WebSSH 让你可以随时随地通过浏览器 SSH 到远程主机。
 * 命令审计日志
 * ~~文件传输（SCP / SFTP）~~ ✅ **已完成**
 
-## 文件上传功能
+## 文件传输功能
 
-WebSSH 现已支持通过 SFTP 安全上传文件到远程服务器，提供专业的标签式界面：
+WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专业的标签式界面：
 
-### 主要功能
+### 文件上传
 - **标签式界面**：Shell 控制台和文件上传分别使用独立标签页
 - **多文件支持**：一次最多上传 3 个文件（可配置）
 - **文件大小限制**：每个文件最大 10MB（可配置）
@@ -83,17 +83,28 @@ WebSSH 现已支持通过 SFTP 安全上传文件到远程服务器，提供专�
 - **实时进度**：通过 SignalR 显示实时上传状态
 - **SFTP 集成**：使用现有 SSH 连接进行安全传输
 
+### 文件下载
+- **远程文件浏览**：导航和浏览远程目录结构
+- **多文件选择**：每次操作下载最多 3 个文件（可配置）
+- **ZIP 压缩支持**：多文件自动打包下载
+- **大小限制**：最大 50MB 总下载大小（可配置）
+- **速率限制**：基于 IP 地址限制（每小时 20 次下载，可配置）
+- **实时进度**：通过 SignalR 显示实时下载状态
+
 ### 在线演示
-🎯 **[交互式演示](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - 体验文件上传界面
+🎯 **[交互式演示](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - 体验文件上传/下载界面
 
 ### 配置说明
-可在 `appsettings.json` 中配置上传限制：
+可在 `appsettings.json` 中配置文件传输限制：
 ```json
 {
   "ShellConfiguration": {
     "MaxFilesPerUpload": 3,
     "MaxFileSizeMB": 10,
-    "MaxFilesPerHour": 20
+    "MaxFilesPerHour": 20,
+    "MaxFilesPerDownload": 3,
+    "MaxDownloadSizeMB": 50,
+    "MaxDownloadsPerHour": 20
   }
 }
 ```

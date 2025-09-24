@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSSH File Upload Demo - Tab Interface</title>
+    <title>WebSSH File Transfer Demo - Upload & Download Interface</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f8f9fa; }
@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="container-fluid mt-4">
-        <h2>WebSSH File Upload Feature Demo - Enhanced with Restrictions</h2>
+        <h2>WebSSH File Transfer Feature Demo - Upload & Download with Enhanced Restrictions</h2>
         <p class="text-muted">New tab-based interface with upload limitations and IP-based rate limiting.</p>
         
         <div class="container-fluid">
@@ -27,6 +27,11 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">
                         Upload Files
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="download-tab" data-bs-toggle="tab" data-bs-target="#download" type="button" role="tab">
+                        Download Files
                     </button>
                 </li>
             </ul>
@@ -103,28 +108,154 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Download Files Tab -->
+                <div class="tab-pane fade" id="download" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Download Files from Remote Server</h5>
+                                    <small class="text-muted">
+                                        Limits: Max 3 files per download, 50MB total size, 20 downloads per hour
+                                    </small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group mb-3">
+                                        <label for="browsePath">Browse Path:</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" value="/home/user/" readonly>
+                                            <button class="btn btn-outline-secondary" disabled>
+                                                📁 Browse
+                                            </button>
+                                        </div>
+                                        <small class="form-text text-muted">Enter the path to browse remote files</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6>Remote Files:</h6>
+                                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                            <table class="table table-sm table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="50">Select</th>
+                                                        <th>Name</th>
+                                                        <th width="100">Size</th>
+                                                        <th width="150">Modified</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr class="table-secondary">
+                                                        <td>
+                                                            <button class="btn btn-sm btn-link p-0">⬆️</button>
+                                                        </td>
+                                                        <td><strong>📁 ..</strong></td>
+                                                        <td>-</td>
+                                                        <td>-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" class="form-check-input" checked>
+                                                        </td>
+                                                        <td>report.pdf</td>
+                                                        <td>2.1 MB</td>
+                                                        <td>Dec 19 14:30</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" class="form-check-input" checked>
+                                                        </td>
+                                                        <td>data.csv</td>
+                                                        <td>856 KB</td>
+                                                        <td>Dec 19 12:15</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-link p-0">📁</button>
+                                                        </td>
+                                                        <td><strong>📁 projects</strong></td>
+                                                        <td>-</td>
+                                                        <td>Dec 18 09:45</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" class="form-check-input">
+                                                        </td>
+                                                        <td>config.json</td>
+                                                        <td>1.2 KB</td>
+                                                        <td>Dec 17 16:20</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6>Selected Files (2):</h6>
+                                        <ul class="list-group">
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>📄 report.pdf</span>
+                                                <button class="btn btn-sm btn-outline-danger">×</button>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>📊 data.csv</span>
+                                                <button class="btn btn-sm btn-outline-danger">×</button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <button class="btn btn-success" id="downloadBtn">
+                                        <span id="downloadIcon">⬇️</span> Download Selected Files
+                                    </button>
+                                    <div class="alert alert-info mt-3" id="downloadStatus" style="display: none;">
+                                        <strong>Download Progress:</strong><br>
+                                        ✅ report.pdf downloaded successfully<br>
+                                        ✅ data.csv downloaded successfully<br>
+                                        <span class="text-success"><strong>Download completed: 2 files packaged in ZIP archive</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="row mt-4">
             <div class="col-md-12">
-                <h4>🚀 New Features & Restrictions:</h4>
+                <h4>🚀 File Transfer Features & Restrictions:</h4>
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>✨ UI Improvements:</h6>
+                        <h6>📤 Upload Features:</h6>
                         <ul class="list-group">
                             <li class="list-group-item">🔄 <strong>Tab Interface:</strong> Separate tabs for Shell Console and File Upload</li>
                             <li class="list-group-item">📋 <strong>Clear Limits Display:</strong> Upload restrictions shown in card header</li>
                             <li class="list-group-item">🎨 <strong>Enhanced Error Messages:</strong> Red alerts for errors, green for success</li>
                             <li class="list-group-item">🔄 <strong>Auto-clear on Success:</strong> Files cleared after successful upload</li>
                         </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>🛡️ Upload Restrictions:</h6>
+                        
+                        <h6 class="mt-3">🛡️ Upload Restrictions:</h6>
                         <ul class="list-group">
                             <li class="list-group-item">📊 <strong>Max 3 Files per Upload:</strong> Server-side validation</li>
                             <li class="list-group-item">📏 <strong>Max 10MB per File:</strong> Client & server validation</li>
                             <li class="list-group-item">⏱️ <strong>Max 20 Files per Hour:</strong> IP-based rate limiting</li>
+                            <li class="list-group-item">🔒 <strong>Memory Cache Tracking:</strong> In-memory IP tracking with automatic expiration</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>📥 Download Features:</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item">🗂️ <strong>File Browser:</strong> Navigate remote directory structure</li>
+                            <li class="list-group-item">✅ <strong>Multi-file Selection:</strong> Select multiple files with checkboxes</li>
+                            <li class="list-group-item">📦 <strong>ZIP Archive:</strong> Multiple files packaged automatically</li>
+                            <li class="list-group-item">🎯 <strong>Single File Download:</strong> Direct download for individual files</li>
+                        </ul>
+                        
+                        <h6 class="mt-3">🛡️ Download Restrictions:</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item">📊 <strong>Max 3 Files per Download:</strong> Server-side validation</li>
+                            <li class="list-group-item">📏 <strong>Max 50MB Total Size:</strong> Combined download size limit</li>
+                            <li class="list-group-item">⏱️ <strong>Max 20 Downloads per Hour:</strong> IP-based rate limiting</li>
                             <li class="list-group-item">🔒 <strong>Memory Cache Tracking:</strong> In-memory IP tracking with automatic expiration</li>
                         </ul>
                     </div>
@@ -151,7 +282,10 @@
   "ShellConfiguration": {
     "MaxFilesPerUpload": 3,
     "MaxFileSizeMB": 10,
-    "MaxFilesPerHour": 20
+    "MaxFilesPerHour": 20,
+    "MaxFilesPerDownload": 3,
+    "MaxDownloadSizeMB": 50,
+    "MaxDownloadsPerHour": 20
   }
 }</code></pre>
                     </div>
@@ -183,6 +317,23 @@
                 button.disabled = false;
                 button.className = 'btn btn-success';
             }, 2000);
+        });
+
+        // Download demo functionality
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const button = this;
+            const status = document.getElementById('downloadStatus');
+            const icon = document.getElementById('downloadIcon');
+            
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Downloading...';
+            button.disabled = true;
+            
+            setTimeout(function() {
+                status.style.display = 'block';
+                button.innerHTML = '<span id="downloadIcon">✅</span> Download Complete';
+                button.disabled = false;
+                button.className = 'btn btn-success';
+            }, 2500);
         });
     </script>
 </body>
