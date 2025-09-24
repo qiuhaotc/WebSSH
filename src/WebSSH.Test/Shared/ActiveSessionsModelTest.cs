@@ -1,6 +1,5 @@
 ﻿using System;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 using WebSSH.Shared;
 
 namespace WebSSH.Test
