@@ -145,21 +145,21 @@
                             {
                                 <div class="mb-3">
                                     <h6>Select Files to Download:</h6>
-                                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                                        <table class="table table-sm table-hover">
-                                            <thead>
+                                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead class="table-light sticky-top">
                                                 <tr>
-                                                    <th width="50">Select</th>
-                                                    <th>Name</th>
-                                                    <th width="100">Size</th>
-                                                    <th width="150">Modified</th>
+                                                    <th width="60" class="text-center">Select</th>
+                                                    <th style="min-width: 200px;">Name</th>
+                                                    <th width="100" class="text-end">Size</th>
+                                                    <th width="160" class="text-center">Modified</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach (var file in remoteFiles)
                                                 {
-                                                    <tr class="@(file.IsDirectory ? "table-secondary" : "")">
-                                                        <td>
+                                                    <tr class="@(file.IsDirectory ? "table-secondary" : "")" @ondblclick="@(() => { if (file.IsDirectory && file.Name != "..") NavigateToDirectory(file.FullPath); })">
+                                                        <td class="text-center">
                                                             @if (!file.IsDirectory)
                                                             {
                                                                 <input type="checkbox" class="form-check-input" 
@@ -182,12 +182,12 @@
                                                             }
                                                         </td>
                                                         <td>
-                                                            <span class="@(file.IsDirectory ? "fw-bold" : "")">
+                                                            <span class="@(file.IsDirectory ? "fw-bold" : "")" style="word-break: break-all; font-family: 'Courier New', monospace;">
                                                                 @(file.IsDirectory ? "📁 " + file.Name : file.Name)
                                                             </span>
                                                         </td>
-                                                        <td>@(file.IsDirectory ? "-" : FormatFileSize(file.Size))</td>
-                                                        <td>@file.LastModified.ToString("MMM dd HH:mm")</td>
+                                                        <td class="text-end">@(file.IsDirectory ? "-" : FormatFileSize(file.Size))</td>
+                                                        <td class="text-center" style="font-family: 'Courier New', monospace;">@file.LastModified.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                                     </tr>
                                                 }
                                             </tbody>

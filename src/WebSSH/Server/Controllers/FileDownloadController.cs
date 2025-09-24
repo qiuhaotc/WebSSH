@@ -208,7 +208,6 @@ namespace WebSSH.Server.Controllers
                         var singleFile = downloadStreams.First();
                         await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", $"Download ready: {singleFile.fileName}");
                         
-                        Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{singleFile.fileName}\"");
                         return File(singleFile.content, "application/octet-stream", singleFile.fileName);
                     }
                     else if (downloadStreams.Count > 1)
@@ -230,7 +229,6 @@ namespace WebSSH.Server.Controllers
 
                             await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", $"Download ready: {downloadStreams.Count} files in ZIP archive");
                             
-                            Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{zipFileName}\"");
                             return File(zipStream.ToArray(), "application/zip", zipFileName);
                         }
                     }
@@ -304,7 +302,20 @@ namespace WebSSH.Server.Controllers
                     
                     var sftpFiles = sftpClient.ListDirectory(path);
                     
-                    foreach (var file in sftpFiles.Where(f => f.Name != "." && f.Name != ".."))
+                    // Add parent directory entry if not at root
+                    if (path != "/" && !string.IsNullOrEmpty(path.Trim('/')))
+                    {
+                        files.Add(new RemoteFileInfo
+                        {
+                            Name = "..",
+                            FullPath = Path.GetDirectoryName(path.TrimEnd('/'))?.Replace('\\', '/') ?? "/",
+                            IsDirectory = true,
+                            Size = 0,
+                            LastModified = DateTime.Now
+                        });
+                    }
+                    
+                    foreach (var file in sftpFiles.Where(f => f.Name != "." && f.Name != ".." && !f.Name.StartsWith('.')))
                     {
                         files.Add(new RemoteFileInfo
                         {
