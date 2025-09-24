@@ -69,7 +69,34 @@ Planned (roadmap ideas):
 * Structured output channels (stdout/stderr separation)
 * Optional rate limiting / flood protection
 * Audit log of executed commands
-* Secure copy (SCP / SFTP) integration
+* ~~Secure copy (SCP / SFTP) integration~~ ✅ **Completed**
+
+## File Upload Feature
+
+WebSSH now supports secure file upload to remote servers via SFTP with a professional tab-based interface:
+
+### Key Features
+- **Tab-based Interface**: Separate tabs for Shell Console and File Upload
+- **Multiple File Support**: Upload up to 3 files simultaneously (configurable)
+- **File Size Limits**: Maximum 10MB per file (configurable)
+- **Rate Limiting**: IP-based limiting (20 files per hour, configurable)
+- **Real-time Progress**: Live upload status via SignalR
+- **SFTP Integration**: Secure transfer using existing SSH connections
+
+### Live Demo
+🎯 **[Interactive Demo](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - Try the file upload interface
+
+### Configuration
+Upload restrictions can be configured in `appsettings.json`:
+```json
+{
+  "ShellConfiguration": {
+    "MaxFilesPerUpload": 3,
+    "MaxFileSizeMB": 10,
+    "MaxFilesPerHour": 20
+  }
+}
+```
 
 ## Deployment Via Docker
 
