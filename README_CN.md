@@ -98,6 +98,9 @@ WebSSH 现已支持通过 SFTP 安全上传文件到远程服务器，提供专�
 }
 ```
 
+### 实现详情
+📋 **[完整实现摘要](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/implementation-summary.md)** - 详细的技术文档，包含开发过程中的所有更改、功能特性和架构决策
+
 ## 通过 Docker 部署
 
 示例：对外监听 8070 端口，并设置第一个用户的密码为 `your_password`。

@@ -98,6 +98,9 @@ Upload restrictions can be configured in `appsettings.json`:
 }
 ```
 
+### Implementation Details
+📋 **[Complete Implementation Summary](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/implementation-summary.md)** - Detailed technical documentation of all changes, features, and architecture decisions made during development
+
 ## Deployment Via Docker
 
 Running your server at port 8070, config the password "your_password" to your own.
