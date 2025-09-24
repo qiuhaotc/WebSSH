@@ -90,15 +90,14 @@ namespace WebSSH.Server.Controllers
                     return response;
                 }
 
-                // Check IP-based rate limiting
+                // Check IP-based rate limiting with sliding expiration
                 var clientIp = HttpContext.GetRealIpAddress();
                 var cacheKey = $"upload_count_{clientIp}";
-                var currentHour = DateTime.UtcNow.ToString("yyyyMMddHH");
-                var hourlyKey = $"{cacheKey}_{currentHour}";
 
-                var currentUploads = MemoryCache.GetOrCreate(hourlyKey, entry =>
+                var currentUploads = MemoryCache.GetOrCreate(cacheKey, entry =>
                 {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+                    entry.SlidingExpiration = TimeSpan.FromHours(1);
+                    entry.Size = 1; // Required when SizeLimit is set
                     return 0;
                 });
 
@@ -174,7 +173,11 @@ namespace WebSSH.Server.Controllers
                 var successfulUploads = result.UploadedFiles.Count(f => f.Success);
                 if (successfulUploads > 0)
                 {
-                    MemoryCache.Set(hourlyKey, currentUploads + successfulUploads, TimeSpan.FromHours(1));
+                    MemoryCache.Set(cacheKey, currentUploads + successfulUploads, new MemoryCacheEntryOptions
+                    {
+                        SlidingExpiration = TimeSpan.FromHours(1),
+                        Size = 1 // Required when SizeLimit is set
+                    });
                 }
 
                 result.TotalFiles = files.Count;

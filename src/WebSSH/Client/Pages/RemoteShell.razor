@@ -262,7 +262,9 @@
             foreach (var file in selectedFiles)
             {
                 var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10MB limit
-                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+                // Handle ContentType safely for all file types including MSI
+                var contentType = !string.IsNullOrWhiteSpace(file.ContentType) ? file.ContentType : "application/octet-stream";
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
                 content.Add(streamContent, "files", file.Name);
             }
 
