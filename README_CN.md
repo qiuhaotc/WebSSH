@@ -69,7 +69,37 @@ WebSSH 让你可以随时随地通过浏览器 SSH 到远程主机。
 * 标准输出 / 错误输出分离
 * 速率限制与洪泛防护
 * 命令审计日志
-* 文件传输（SCP / SFTP）
+* ~~文件传输（SCP / SFTP）~~ ✅ **已完成**
+
+## 文件上传功能
+
+WebSSH 现已支持通过 SFTP 安全上传文件到远程服务器，提供专业的标签式界面：
+
+### 主要功能
+- **标签式界面**：Shell 控制台和文件上传分别使用独立标签页
+- **多文件支持**：一次最多上传 3 个文件（可配置）
+- **文件大小限制**：每个文件最大 10MB（可配置）
+- **速率限制**：基于 IP 地址限制（每小时 20 个文件，可配置）
+- **实时进度**：通过 SignalR 显示实时上传状态
+- **SFTP 集成**：使用现有 SSH 连接进行安全传输
+
+### 在线演示
+🎯 **[交互式演示](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - 体验文件上传界面
+
+### 配置说明
+可在 `appsettings.json` 中配置上传限制：
+```json
+{
+  "ShellConfiguration": {
+    "MaxFilesPerUpload": 3,
+    "MaxFileSizeMB": 10,
+    "MaxFilesPerHour": 20
+  }
+}
+```
+
+### 实现详情
+📋 **[完整实现摘要](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/implementation-summary.md)** - 详细的技术文档，包含开发过程中的所有更改、功能特性和架构决策
 
 ## 通过 Docker 部署
 

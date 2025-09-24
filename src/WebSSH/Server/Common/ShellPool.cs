@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Renci.SshNet;
 using WebSSH.Shared;
 using WebSSH.Server.Hubs;
 
@@ -153,6 +154,16 @@ namespace WebSSH.Server
             {
                 return new List<ActiveSessionModel>();
             }
+        }
+
+        public SshClient GetSshClient(string sessionId, Guid uniqueId)
+        {
+            if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && 
+                serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
+            {
+                return serverActiveSessionModel.Client;
+            }
+            return null;
         }
     }
 }

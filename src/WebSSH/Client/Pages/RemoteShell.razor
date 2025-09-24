@@ -3,15 +3,103 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime;
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Headers
 @implements IAsyncDisposable
 
 <h3>Shell</h3>
 
-<div class="row">
-    <div class="col-md-12">
-        <div id="ShellOutput" style="width:100%;height:70vh; background:#000; color:#fff;"></div>
-        <div class="mt-2 small text-muted">Connection: @connectionStatus
-            <button class="btn btn-sm btn-secondary ms-2" @onclick="Clear">Clear</button>
+<div class="container-fluid">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" id="shellTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "console" ? "active" : "")" 
+                    @onclick="@(() => SwitchTab("console"))" 
+                    type="button" role="tab">
+                Shell Console
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "upload" ? "active" : "")" 
+                    @onclick="@(() => SwitchTab("upload"))" 
+                    type="button" role="tab">
+                Upload Files
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-3">
+        <!-- Shell Console Tab -->
+        <div class="tab-pane fade @(activeTab == "console" ? "show active" : "")">
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="ShellOutput" style="width:100%;height:60vh; background:#000; color:#fff;"></div>
+                    <div class="mt-2 small text-muted">Connection: @connectionStatus
+                        <button class="btn btn-sm btn-secondary ms-2" @onclick="Clear">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Files Tab -->
+        <div class="tab-pane fade @(activeTab == "upload" ? "show active" : "")">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Upload Files to Remote Server</h5>
+                            <small class="text-muted">
+                                Limits: Max 3 files per upload, 10MB per file, 20 files per hour
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label for="remotePath">Remote Path:</label>
+                                <input type="text" id="remotePath" class="form-control" @bind="remotePath" placeholder="/"/>
+                                <small class="form-text text-muted">Specify the remote directory path (e.g., / for root directory, /home/user for user directory)</small>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="fileInput">Select Files:</label>
+                                <InputFile id="fileInput" OnChange="OnFileSelected" multiple class="form-control" accept="*/*" />
+                                <small class="form-text text-muted">You can select up to 3 files to upload (max 10MB each)</small>
+                            </div>
+                            @if (selectedFiles != null && selectedFiles.Count > 0)
+                            {
+                                <div class="mb-3">
+                                    <h6>Selected Files (@selectedFiles.Count):</h6>
+                                    <ul class="list-group">
+                                        @foreach (var file in selectedFiles)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>@file.Name</span>
+                                                <small>@FormatFileSize(file.Size)</small>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                                <button class="btn btn-primary" @onclick="UploadFiles" disabled="@isUploading">
+                                    @if (isUploading)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        <span>Uploading...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Upload Files</span>
+                                    }
+                                </button>
+                            }
+                            @if (!string.IsNullOrEmpty(uploadStatus))
+                            {
+                                <div class="alert @(uploadStatus.Contains("Error") || uploadStatus.Contains("failed") ? "alert-danger" : "alert-info") mt-3" style="white-space: pre-line;">
+                                    @uploadStatus
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -24,6 +112,15 @@
     HubConnection hubConnection;
     string connectionStatus = "Initializing";
     DotNetObjectReference<RemoteShell> dotNetRef;
+
+    // Tab management
+    private string activeTab = "console";
+
+    // File upload properties
+    private string remotePath = "/";
+    private List<IBrowserFile> selectedFiles = new();
+    private bool isUploading = false;
+    private string uploadStatus = "";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -42,6 +139,15 @@
                 hubConnection.On<string>("ShellOutput", (output) =>
                 {
                     _ = JSRuntime.InvokeVoidAsync("websshTerm.write", output);
+                });
+
+                hubConnection.On<string>("FileUploadStatus", (status) =>
+                {
+                    _ = InvokeAsync(() =>
+                    {
+                        uploadStatus = status;
+                        StateHasChanged();
+                    });
                 });
 
                 hubConnection.Reconnecting += async error =>
@@ -89,6 +195,136 @@
     async void Clear()
     {
         await JSRuntime.InvokeVoidAsync("websshTerm.clear");
+    }
+
+    void SwitchTab(string tab)
+    {
+        activeTab = tab;
+        StateHasChanged();
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles(3).ToList(); // Limit to 3 files as per configuration
+        
+        // Client-side validation
+        var maxSizeBytes = 10 * 1024 * 1024; // 10MB
+        var oversizedFiles = selectedFiles.Where(f => f.Size > maxSizeBytes).ToList();
+        
+        if (oversizedFiles.Any())
+        {
+            uploadStatus = $"Error: The following files are too large (max 10MB): {string.Join(", ", oversizedFiles.Select(f => f.Name))}";
+            selectedFiles = selectedFiles.Except(oversizedFiles).ToList();
+        }
+        else if (selectedFiles.Count > 3)
+        {
+            uploadStatus = "Error: Too many files selected. Maximum 3 files allowed per upload.";
+            selectedFiles = selectedFiles.Take(3).ToList();
+        }
+        else
+        {
+            uploadStatus = "";
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task UploadFiles()
+    {
+        if (selectedFiles == null || selectedFiles.Count == 0)
+            return;
+
+        // Client-side validation before upload
+        if (selectedFiles.Count > 3)
+        {
+            uploadStatus = "Error: Maximum 3 files allowed per upload.";
+            return;
+        }
+
+        var maxSizeBytes = 10 * 1024 * 1024; // 10MB
+        var oversizedFiles = selectedFiles.Where(f => f.Size > maxSizeBytes).ToList();
+        if (oversizedFiles.Any())
+        {
+            uploadStatus = $"Error: Files too large (max 10MB): {string.Join(", ", oversizedFiles.Select(f => f.Name))}";
+            return;
+        }
+
+        isUploading = true;
+        uploadStatus = "Preparing upload...";
+        StateHasChanged();
+
+        try
+        {
+            await hubConnection.InvokeAsync("NotifyFileUploadStart", UniqueId, selectedFiles.Count);
+
+            using var content = new MultipartFormDataContent();
+            
+            foreach (var file in selectedFiles)
+            {
+                var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10MB limit
+                // Handle ContentType safely for all file types including MSI
+                var contentType = !string.IsNullOrWhiteSpace(file.ContentType) ? file.ContentType : "application/octet-stream";
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                content.Add(streamContent, "files", file.Name);
+            }
+
+            content.Add(new StringContent(remotePath), "remotePath");
+
+            var response = await Http.PostAsync($"/api/FileUpload/UploadFiles?uniqueId={UniqueId}", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ServerResponse<FileUploadResult>>();
+                if (result?.StausResult == StausResult.Successful && result.Response != null)
+                {
+                    uploadStatus = $"Upload completed: {result.Response.SuccessfulUploads}/{result.Response.TotalFiles} files uploaded successfully";
+                    
+                    // Show individual file errors if any
+                    var failedFiles = result.Response.UploadedFiles.Where(f => !f.Success).ToList();
+                    if (failedFiles.Any())
+                    {
+                        uploadStatus += $"\n\nErrors:\n{string.Join("\n", failedFiles.Select(f => $"• {f.FileName}: {f.ErrorMessage}"))}";
+                    }
+                    
+                    // Clear selected files on success
+                    if (result.Response.SuccessfulUploads > 0)
+                    {
+                        selectedFiles.Clear();
+                    }
+                }
+                else
+                {
+                    uploadStatus = $"Error: {result?.ExtraMessage ?? "Unknown error occurred"}";
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                uploadStatus = $"Error: HTTP {response.StatusCode} - {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            uploadStatus = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
     }
 
     // Legacy StaticUtils console buffering removed for xterm direct streaming.

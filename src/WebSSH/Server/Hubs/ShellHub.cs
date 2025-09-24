@@ -78,5 +78,17 @@ namespace WebSSH.Server.Hubs
                 await Clients.Caller.SendAsync("ShellOutput", $"Error input: {ex.Message}");
             }
         }
+
+        public async Task NotifyFileUploadStart(Guid uniqueId, int fileCount)
+        {
+            var httpContext = Context.GetHttpContext();
+            var sessionId = httpContext?.Session.GetString(Constants.ClientSessionIdName);
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                throw new HubException("No active session");
+            }
+
+            await Clients.Group(BuildGroup(sessionId, uniqueId)).SendAsync("FileUploadStatus", $"Starting upload of {fileCount} file(s)...");
+        }
     }
 }
