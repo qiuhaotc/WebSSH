@@ -14,14 +14,14 @@
     <ul class="nav nav-tabs" id="shellTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link @(activeTab == "console" ? "active" : "")" 
-                    @onclick="() => SwitchTab(\"console\")" 
+                    @onclick="@(() => SwitchTab("console"))" 
                     type="button" role="tab">
                 Shell Console
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link @(activeTab == "upload" ? "active" : "")" 
-                    @onclick="() => SwitchTab(\"upload\")" 
+                    @onclick="@(() => SwitchTab("upload"))" 
                     type="button" role="tab">
                 Upload Files
             </button>
