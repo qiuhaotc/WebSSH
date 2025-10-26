@@ -25,11 +25,6 @@ This implementation adds comprehensive file transfer functionality (both upload 
   - Extended `ShellPool.cs` with `GetSshClient()` method for SFTP access
   - Enhanced `ShellHub.cs` with SignalR upload status broadcasting
 
-### **2. Enhanced Demo Page** (`099bc3b`)
-- **Commit:** "Add demo page and complete file upload implementation"  
-- **Created:** Interactive demonstration page (`demo.html`)
-- **Enhanced:** UI components and user experience
-
 ### **3. Project Configuration Fixes** (`0ab0c21`)
 - **Commit:** "Address feedback: revert .NET version, fix remote path default and error handling"
 - **Reverted:** .NET version changes to maintain .NET 9.0 target framework
@@ -60,12 +55,6 @@ This implementation adds comprehensive file transfer functionality (both upload 
 - **Fixed:** MSI and binary file ContentType exception handling
 - **Simplified:** Cache key management with sliding expiration
 - **Added:** Required `Size` property for memory cache entries
-
-### **8. Documentation & Organization** (`46071d5`)
-- **Commit:** "Move demo.html to docs folder and add file upload documentation to README files"
-- **Relocated:** Demo file to proper `docs/` folder
-- **Enhanced:** Both English and Chinese README files with comprehensive feature documentation
-- **Added:** Live demo links and configuration examples
 
 ---
 
@@ -147,11 +136,6 @@ This implementation adds comprehensive file transfer functionality (both upload 
 - **Progress Feedback:** Real-time upload status with SignalR
 - **Error Handling:** Clear validation messages and failure reporting
 - **File Information:** Size formatting and upload restrictions display
-
-### **Interactive Demo**
-- **Location:** `docs/demo.html`
-- **Features:** Complete interface demonstration with simulated uploads
-- **Access:** Available via GitHub raw URL for live testing
 
 ---
 

@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using Renci.SshNet;
-using WebSSH.Shared;
-using WebSSH.Server.Hubs;
 using WebSSH.Server.Extensions;
+using WebSSH.Server.Hubs;
+using WebSSH.Shared;
 
 namespace WebSSH.Server.Controllers
 {
@@ -25,7 +25,7 @@ namespace WebSSH.Server.Controllers
         public ShellConfiguration ShellConfiguration { get; }
         public IMemoryCache MemoryCache { get; }
 
-        public FileDownloadController(ShellPool shellPool, IHubContext<ShellHub> hubContext, 
+        public FileDownloadController(ShellPool shellPool, IHubContext<ShellHub> hubContext,
             ShellConfiguration shellConfiguration, IMemoryCache memoryCache)
         {
             ShellPool = shellPool;
@@ -39,7 +39,7 @@ namespace WebSSH.Server.Controllers
         {
             var response = new ServerResponse<FileDownloadResult> { StausResult = StausResult.Successful };
             var groupName = "";
-            
+
             try
             {
                 var sessionId = HttpContext.Session.GetString(Constants.ClientSessionIdName);
@@ -73,7 +73,7 @@ namespace WebSSH.Server.Controllers
                 {
                     response.StausResult = StausResult.Failed;
                     response.ExtraMessage = $"Too many files. Maximum {ShellConfiguration.MaxFilesPerDownload} files allowed per download";
-                    await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", 
+                    await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus",
                         $"Error: Too many files. Maximum {ShellConfiguration.MaxFilesPerDownload} files allowed per download");
                     return BadRequest(response);
                 }
@@ -93,7 +93,7 @@ namespace WebSSH.Server.Controllers
                 {
                     response.StausResult = StausResult.Failed;
                     response.ExtraMessage = $"Download limit exceeded. Maximum {ShellConfiguration.MaxDownloadsPerHour} files per hour allowed. Current: {currentDownloads}";
-                    await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", 
+                    await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus",
                         $"Error: Download limit exceeded. Maximum {ShellConfiguration.MaxDownloadsPerHour} files per hour allowed. You have downloaded {currentDownloads} files this hour");
                     return BadRequest(response);
                 }
@@ -207,7 +207,7 @@ namespace WebSSH.Server.Controllers
                     {
                         var singleFile = downloadStreams.First();
                         await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", $"Download ready: {singleFile.fileName}");
-                        
+
                         return File(singleFile.content, "application/octet-stream", singleFile.fileName);
                     }
                     else if (downloadStreams.Count > 1)
@@ -228,7 +228,7 @@ namespace WebSSH.Server.Controllers
                             }
 
                             await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", $"Download ready: {downloadStreams.Count} files in ZIP archive");
-                            
+
                             return File(zipStream.ToArray(), "application/zip", zipFileName);
                         }
                     }
@@ -236,9 +236,9 @@ namespace WebSSH.Server.Controllers
 
                 result.TotalFiles = request.FilePaths.Count;
                 result.SuccessfulDownloads = successfulDownloads;
-                
+
                 await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", $"Download completed: {result.SuccessfulDownloads}/{result.TotalFiles} files downloaded successfully");
-                
+
                 if (successfulDownloads == 0)
                 {
                     response.StausResult = StausResult.Failed;
@@ -254,21 +254,21 @@ namespace WebSSH.Server.Controllers
             {
                 response.StausResult = StausResult.Exception;
                 response.ExtraMessage = ex.Message;
-                
+
                 if (!string.IsNullOrEmpty(groupName))
                 {
                     await HubContext.Clients.Group(groupName).SendAsync("FileDownloadStatus", $"Download failed: {ex.Message}");
                 }
-                
+
                 return StatusCode(500, response);
             }
         }
 
         [HttpGet]
-        public async Task<IActionResult> ListFiles(Guid uniqueId, string path = "/")
+        public IActionResult ListFiles(Guid uniqueId, string path = "/")
         {
             var response = new ServerResponse<List<RemoteFileInfo>> { StausResult = StausResult.Successful };
-            
+
             try
             {
                 var sessionId = HttpContext.Session.GetString(Constants.ClientSessionIdName);
@@ -299,9 +299,9 @@ namespace WebSSH.Server.Controllers
                 using (var sftpClient = new SftpClient(sshClient.ConnectionInfo))
                 {
                     sftpClient.Connect();
-                    
+
                     var sftpFiles = sftpClient.ListDirectory(path);
-                    
+
                     // Add parent directory entry if not at root
                     if (path != "/" && !string.IsNullOrEmpty(path.Trim('/')))
                     {
@@ -314,7 +314,7 @@ namespace WebSSH.Server.Controllers
                             LastModified = DateTime.Now
                         });
                     }
-                    
+
                     foreach (var file in sftpFiles.Where(f => f.Name != "." && f.Name != ".." && !f.Name.StartsWith('.')))
                     {
                         files.Add(new RemoteFileInfo

@@ -159,7 +159,7 @@
                                             <tbody>
                                                 @foreach (var file in remoteFiles)
                                                 {
-                                                    <tr class="@(file.IsDirectory ? "table-secondary" : "")" @ondblclick="@(() => { if (file.IsDirectory && file.Name != "..") NavigateToDirectory(file.FullPath); })">
+                                                    <tr class="@(file.IsDirectory ? "table-secondary" : "")" @ondblclick="@(async () => { if (file.IsDirectory && file.Name != "..") await NavigateToDirectory(file.FullPath); })">
                                                         <td class="text-center" style="vertical-align: middle;">
                                                             @if (!file.IsDirectory)
                                                             {
@@ -312,13 +312,29 @@
                 {
                     connectionStatus = "Connected";
                     _ = JSRuntime.InvokeVoidAsync("websshTerm.write", "\r\n[client] Reconnected.\r\n");
+                    // Rejoin shell group to resume receiving real-time output
+                    try
+                    {
+                        await hubConnection.InvokeAsync("JoinShell", UniqueId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Failed to rejoin: {ex.Message}\r\n");
+                    }
+
                     await InvokeAsync(StateHasChanged);
                 };
 
                 hubConnection.Closed += async error =>
                 {
                     connectionStatus = "Disconnected";
-                    _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Connection closed: {error?.Message}\r\n");
+                    // _ = JSRuntime.InvokeVoidAsync("websshTerm.write", $"\r\n[client] Connection closed: {error?.Message}\r\n");
+                    // Notify server that client is leaving to resume queuing
+                    try
+                    {
+                        await hubConnection.InvokeAsync("LeaveShell", UniqueId);
+                    }
+                    catch { }
                     await InvokeAsync(StateHasChanged);
                 };
 
@@ -604,7 +620,7 @@
                 {
                     await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
                 }
-                catch (JSException jsEx)
+                catch (JSException)
                 {
                     // Fallback: try to create a download link directly
                     var base64 = Convert.ToBase64String(fileBytes);
@@ -660,6 +676,11 @@
         {
             try
             {
+                // Notify server that client is leaving before disposing
+                if (hubConnection.State == HubConnectionState.Connected)
+                {
+                    await hubConnection.InvokeAsync("LeaveShell", UniqueId);
+                }
                 await hubConnection.DisposeAsync();
             }
             catch { }

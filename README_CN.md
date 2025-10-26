@@ -18,23 +18,15 @@ WebSSH 让你可以随时随地通过浏览器 SSH 到远程主机。
 
 ### 管理连接
 
-![管理连接](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ManagementConnection.gif)
+![管理连接](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Management.png)
 
 ### 连接服务器并执行命令
 
-点击 “Connect” 按钮后建立到远程服务器的 SSH 会话，可直接执行任意命令。
+点击 "Connect" 按钮后建立到远程服务器的 SSH 会话，可直接执行任意命令。
 
 回到管理页面可以看到所有当前仍保持连接的会话。
 
-功能特性：
-
-1. 支持多行命令输入（切换模式）
-2. 单行模式下支持历史命令回显：方向键 上/下 切换历史
-3. 支持组合键：输入 `ctrl + c` 发送 `^C`，也支持 `ctrl + [a-z]`
-
-![连接与运行命令](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndRunningCommand.gif)
-
-![运行与历史回调](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/RunCommandAndRecallCommand.gif)
+![连接与运行命令](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
 
 ## 实时特性（SignalR 改造）
 
@@ -75,7 +67,11 @@ WebSSH 让你可以随时随地通过浏览器 SSH 到远程主机。
 
 WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专业的标签式界面：
 
+![文件上传](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/UploadFiles.png)
+![文件下载](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/DownLoadFiles.png)
+
 ### 文件上传
+
 - **标签式界面**：Shell 控制台和文件上传分别使用独立标签页
 - **多文件支持**：一次最多上传 3 个文件（可配置）
 - **文件大小限制**：每个文件最大 10MB（可配置）
@@ -84,6 +80,7 @@ WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专�
 - **SFTP 集成**：使用现有 SSH 连接进行安全传输
 
 ### 文件下载
+
 - **远程文件浏览**：导航和浏览远程目录结构
 - **多文件选择**：每次操作下载最多 3 个文件（可配置）
 - **ZIP 压缩支持**：多文件自动打包下载
@@ -91,11 +88,10 @@ WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专�
 - **速率限制**：基于 IP 地址限制（每小时 20 次下载，可配置）
 - **实时进度**：通过 SignalR 显示实时下载状态
 
-### 在线演示
-🎯 **[交互式演示](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - 体验文件上传/下载界面
-
 ### 配置说明
+
 可在 `appsettings.json` 中配置文件传输限制：
+
 ```json
 {
   "ShellConfiguration": {
@@ -110,6 +106,7 @@ WebSSH 现已支持通过 SFTP 与远程服务器安全传输文件，提供专�
 ```
 
 ### 实现详情
+
 📋 **[完整实现摘要](https://github.com/qiuhaotc/WebSSH/blob/master/docs/implementation-summary.md)** - 详细的技术文档，包含开发过程中的所有更改、功能特性和架构决策
 
 ## 通过 Docker 部署

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Text;
+using Microsoft.AspNetCore.SignalR;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 using WebSSH.Shared;
-using Microsoft.AspNetCore.SignalR;
 
 namespace WebSSH.Server
 {
@@ -16,10 +16,8 @@ namespace WebSSH.Server
             ShellStream shellStream = null;
             try
             {
-                var timeOutMinutes = shellConfiguration.MaxIdleMinutes < 1 ? 1 : shellConfiguration.MaxIdleMinutes > 20 ? 20 : shellConfiguration.MaxIdleMinutes;
                 var clientStoredSessionModel = activeSessionModel.StoredSessionModel;
                 sshClient = new SshClient(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, clientStoredSessionModel.PasswordDecryped);
-                sshClient.ConnectionInfo.Timeout = TimeSpan.FromMinutes(timeOutMinutes);
                 sshClient.Connect();
                 var outputQueue = new ConcurrentQueue<string>();
 
@@ -75,21 +73,33 @@ namespace WebSSH.Server
                     try
                     {
                         var msg = Encoding.UTF8.GetString(e.Data);
-                        outputQueue.Enqueue(msg);
-
-                        if(outputQueue.Count > Constants.MaxinumQueueCount)
+                        
+                        // If session has active client, send data directly via SignalR
+                        if (sessionModel.HasActiveClient)
                         {
-                            outputQueue.TryDequeue(out _);
+                            try
+                            {
+                                await hubContext.Clients.Group(Hubs.ShellHub.BuildGroup(sessionId, sessionModel.UniqueKey)).SendAsync("ShellOutput", msg);
+                            }
+                            catch
+                            {
+                                // Broadcast failed, client may have disconnected
+                                // Queue the data for later retrieval
+                                outputQueue.Enqueue(msg);
+                                if (outputQueue.Count > Constants.MaxinumQueueCount)
+                                {
+                                    outputQueue.TryDequeue(out _);
+                                }
+                            }
                         }
-
-                        // Broadcast real-time output to group listeners
-                        try
+                        else
                         {
-                            await hubContext.Clients.Group(Hubs.ShellHub.BuildGroup(sessionId, sessionModel.UniqueKey)).SendAsync("ShellOutput", msg);
-                        }
-                        catch
-                        {
-                            // Ignore broadcast errors; queue still holds data.
+                            // No active client, save to queue
+                            outputQueue.Enqueue(msg);
+                            if (outputQueue.Count > Constants.MaxinumQueueCount)
+                            {
+                                outputQueue.TryDequeue(out _);
+                            }
                         }
                     }
                     catch (Exception ex)

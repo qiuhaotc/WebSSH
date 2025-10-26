@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using WebSSH.Shared;
 
 namespace WebSSH.Server.Hubs
@@ -58,6 +58,24 @@ namespace WebSSH.Server.Hubs
             {
                 await Clients.Caller.SendAsync("ShellOutput", $"Error reading initial output: {ex.Message}");
             }
+
+            // Mark session as active - stop queuing, send data directly via SignalR
+            ShellPool.SetActiveClient(sessionId, uniqueId, true);
+        }
+
+        public async Task LeaveShell(Guid uniqueId)
+        {
+            var httpContext = Context.GetHttpContext();
+            var sessionId = httpContext?.Session.GetString(Constants.ClientSessionIdName);
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                return;
+            }
+
+            // Mark session as inactive - resume queuing data
+            ShellPool.SetActiveClient(sessionId, uniqueId, false);
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, BuildGroup(sessionId, uniqueId));
         }
 
         public async Task SendInput(Guid uniqueId, string data)

@@ -7,8 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Renci.SshNet;
-using WebSSH.Shared;
 using WebSSH.Server.Hubs;
+using WebSSH.Shared;
 
 namespace WebSSH.Server
 {
@@ -47,8 +47,8 @@ namespace WebSSH.Server
         }
 
         static ConcurrentDictionary<string, ServerActiveSessionsModel> ShellPoolDictionary { get; set; } = new();
-    public ShellConfiguration ShellConfiguration { get; }
-    public IHubContext<ShellHub> HubContext { get; }
+        public ShellConfiguration ShellConfiguration { get; }
+        public IHubContext<ShellHub> HubContext { get; }
 
         public void AddShellToPool(string sessionId, ActiveSessionModel activeSessionModel)
         {
@@ -109,6 +109,14 @@ namespace WebSSH.Server
             }
         }
 
+        public void SetActiveClient(string sessionId, Guid uniqueId, bool hasActiveClient)
+        {
+            if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
+            {
+                serverActiveSessionModel.HasActiveClient = hasActiveClient;
+            }
+        }
+
         public bool Disconnected(string sessionId, Guid uniqueId)
         {
             if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel))
@@ -158,7 +166,7 @@ namespace WebSSH.Server
 
         public SshClient GetSshClient(string sessionId, Guid uniqueId)
         {
-            if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) && 
+            if (ShellPoolDictionary.TryGetValue(sessionId, out var serverActiveSessionsModel) &&
                 serverActiveSessionsModel.Sessions.TryGetValue(uniqueId, out var serverActiveSessionModel))
             {
                 return serverActiveSessionModel.Client;

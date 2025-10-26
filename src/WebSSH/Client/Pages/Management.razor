@@ -2,6 +2,9 @@
 @inject NavigationManager NavManager
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
 
 <h3>Management</h3>
 <h4>Connected Sessions</h4>
@@ -45,7 +48,19 @@
 <h4>
     Stored Sessions
     <button class="btn btn-primary btn-sm" @onclick="SaveChanges">Save to Local Storage</button>
+    <button class="btn btn-success btn-sm" @onclick="ExportSessions">Export to JSON</button>
+    <label class="btn btn-info btn-sm" style="margin-bottom: 0;">
+        Import from JSON
+        <InputFile OnChange="ImportSessions" accept=".json" style="display: none;" />
+    </label>
 </h4>
+@if (!string.IsNullOrEmpty(ImportExportStatus))
+{
+    <div class="alert @(ImportExportStatus.Contains("Error") || ImportExportStatus.Contains("Failed") ? "alert-danger" : "alert-success") alert-dismissible fade show" role="alert">
+        @ImportExportStatus
+        <span style="cursor:pointer" @onclick="() => ImportExportStatus = string.Empty">➖</span>
+    </div>
+}
 <div class="row">
     @if (ClientStoredSessionsModel != null && ClientStoredSessionsModel.Sessions.Count > 0)
     {
@@ -113,6 +128,7 @@
 @code {
 
     public string Status { get; set; }
+    public string ImportExportStatus { get; set; }
 
     ClientStoredSessionModel ClientStoredSessionModelForEditOrAdd { get; set; } = new();
 
@@ -237,5 +253,122 @@
         }
 
         StateHasChanged();
+    }
+
+    async Task ExportSessions()
+    {
+        try
+        {
+            if (ClientStoredSessionsModel == null || ClientStoredSessionsModel.Sessions.Count == 0)
+            {
+                ImportExportStatus = "Error: No sessions to export.";
+                StateHasChanged();
+                return;
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+            var json = JsonSerializer.Serialize(ClientStoredSessionsModel, options);
+            var fileName = $"webssh-sessions-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json)));
+
+            ImportExportStatus = $"Successfully exported {ClientStoredSessionsModel.Sessions.Count} session(s) to {fileName}";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ImportExportStatus = $"Error exporting sessions: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    async Task ImportSessions(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null)
+            {
+                ImportExportStatus = "Error: No file selected.";
+                StateHasChanged();
+                return;
+            }
+
+            if (!file.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                ImportExportStatus = "Error: Please select a JSON file.";
+                StateHasChanged();
+                return;
+            }
+
+            var maxFileSize = 1024 * 1024; // 1MB
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var reader = new System.IO.StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+
+            var importedModel = JsonSerializer.Deserialize<ClientStoredSessionsModel>(json);
+
+            if (importedModel == null || importedModel.Sessions == null)
+            {
+                ImportExportStatus = "Error: Invalid JSON format.";
+                StateHasChanged();
+                return;
+            }
+
+            var importCount = 0;
+            var updateCount = 0;
+            var skipCount = 0;
+
+            foreach (var session in importedModel.Sessions)
+            {
+                var existing = ClientStoredSessionsModel.Sessions.FirstOrDefault(s => s.UniqueKey == session.UniqueKey);
+                if (existing != null)
+                {
+                    // Ask user if they want to update existing sessions
+                    var existingByName = ClientStoredSessionsModel.Sessions.FirstOrDefault(s =>
+                        s.DisplayName == session.DisplayName && s.UniqueKey != session.UniqueKey);
+
+                    if (existingByName != null)
+                    {
+                        // Generate new unique key to avoid conflicts
+                        session.UniqueKey = Guid.NewGuid();
+                        session.DisplayName = session.DisplayName + "_imported";
+                    }
+
+                    ClientStoredSessionsModel.AddOrUpdateStoredSessions(session);
+                    updateCount++;
+                }
+                else
+                {
+                    var duplicateName = ClientStoredSessionsModel.Sessions.FirstOrDefault(s => s.DisplayName == session.DisplayName);
+                    if (duplicateName != null)
+                    {
+                        session.DisplayName = session.DisplayName + "_imported";
+                    }
+
+                    ClientStoredSessionsModel.AddOrUpdateStoredSessions(session);
+                    importCount++;
+                }
+            }
+
+            await LocalStorage.SetItemAsync<ClientStoredSessionsModel>(nameof(ClientStoredSessionsModel), ClientStoredSessionsModel);
+
+            ImportExportStatus = $"Successfully imported: {importCount} new session(s), {updateCount} updated, {skipCount} skipped.";
+            StateHasChanged();
+        }
+        catch (JsonException jsonEx)
+        {
+            ImportExportStatus = $"Error: Invalid JSON format - {jsonEx.Message}";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ImportExportStatus = $"Error importing sessions: {ex.Message}";
+            StateHasChanged();
+        }
     }
 }

@@ -4,7 +4,7 @@ English | [中文](README_CN.md)
 
 WebSSH allows you to SSH to your remote host anytime, anywhere.
 
-## Demonstrate Page
+## Demonstrate Site
 
 Check <https://webssh.azurewebsites.net>, you can use any login name and password to logged in.
 
@@ -18,7 +18,7 @@ Input the user name and password and captcha to login, user name and password co
 
 ### Management Connection
 
-![Mangement Connection](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ManagementConnection.gif)
+![Mangement Connection](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Management.png)
 
 ### Connected To Server, Running Command
 
@@ -26,15 +26,7 @@ Press the Connect button, connect to the remote server, then run whatever comman
 
 Go to management page, will list all available connected servers.
 
-Features:
-
-1. Multi lines command
-2. Recall command, in single line mode, press arrow up and down can switch command from history
-3. Press "ctrl + c" can run command "^C", support "ctrl + [a-z]"
-
-![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/ConnectedAndRunningCommand.gif)
-
-![Run & Recall Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/RunCommandAndRecallCommand.gif)
+![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
 
 ## Real-time (SignalR) Enhancements
 
@@ -75,6 +67,9 @@ Planned (roadmap ideas):
 
 WebSSH now supports secure file upload and download to/from remote servers via SFTP with a professional tab-based interface:
 
+![Upload Files](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/UploadFiles.png)
+![Download Files](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/DownLoadFiles.png)
+
 ### File Upload
 - **Tab-based Interface**: Separate tabs for Shell Console and File Upload
 - **Multiple File Support**: Upload up to 3 files simultaneously (configurable)
@@ -90,9 +85,6 @@ WebSSH now supports secure file upload and download to/from remote servers via S
 - **Size Limits**: Maximum 20MB total download size (configurable)
 - **Rate Limiting**: IP-based limiting (20 downloads per hour, configurable)
 - **Real-time Progress**: Live download status via SignalR
-
-### Live Demo
-🎯 **[Interactive Demo](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/demo.html)** - Try the file upload/download interface
 
 ### Configuration
 File transfer restrictions can be configured in `appsettings.json`:
