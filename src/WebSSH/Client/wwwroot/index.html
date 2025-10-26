@@ -25,7 +25,34 @@
     <script src="js/addon-fit.min.js"></script>
     <script src="js/xtermInterop.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script>
+        // Enhanced Service Worker registration with update detection
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                console.log('Service Worker registered');
+                
+                // Listen for updates
+                registration.addEventListener('updatefound', function() {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available, reload to get the latest version
+                            console.log('New version available! Reloading...');
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 2000);
+                        }
+                    });
+                });
+            });
+            
+            // Listen for controller change (when new SW takes over)
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                console.log('Service Worker controller changed, reloading page...');
+                window.location.reload();
+            });
+        }
+    </script>
     <script src="js/main.js"></script>
 </body>
 </html>
