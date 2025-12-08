@@ -20,6 +20,18 @@ WebSSH 让你可以随时随地通过浏览器 SSH 到远程主机。
 
 ![管理连接](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Management.png)
 
+### 密钥认证
+
+WebSSH 支持使用 SSH 私钥进行身份验证，除了传统的密码认证方式外：
+
+- **多种认证方式**：每个保存的会话可以选择使用密码或私钥认证
+- **加密密钥支持**：支持使用密码短语保护的私钥
+- **多种密钥格式**：兼容 RSA、DSA、ECDSA 和 ED25519 密钥类型
+- **安全存储**：私钥以 base64 编码格式存储在浏览器本地存储中
+- **向后兼容**：现有的基于密码的会话无需任何更改即可继续工作
+
+详细使用说明请参阅 [私钥认证文档](docs/private-key-authentication.md)。
+
 ### 连接服务器并执行命令
 
 点击 "Connect" 按钮后建立到远程服务器的 SSH 会话，可直接执行任意命令。
