@@ -28,8 +28,11 @@ namespace WebSSH.Server
                         throw new Exception("Private key is empty");
                     }
 
+                    // Create PrivateKeyFile from the key content
+                    // Note: PrivateKeyFile reads the key data during construction, so we can dispose the stream afterwards
                     PrivateKeyFile privateKeyFile;
-                    using (var stream = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(privateKeyContent)))
+                    var stream = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(privateKeyContent));
+                    try
                     {
                         if (!string.IsNullOrEmpty(clientStoredSessionModel.PrivateKeyPassphraseDecrypted))
                         {
@@ -41,6 +44,10 @@ namespace WebSSH.Server
                             // Private key without passphrase
                             privateKeyFile = new PrivateKeyFile(stream);
                         }
+                    }
+                    finally
+                    {
+                        stream.Dispose();
                     }
 
                     var keyAuth = new PrivateKeyAuthenticationMethod(clientStoredSessionModel.UserName, privateKeyFile);
