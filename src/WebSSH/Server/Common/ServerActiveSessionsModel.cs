@@ -17,7 +17,42 @@ namespace WebSSH.Server
             try
             {
                 var clientStoredSessionModel = activeSessionModel.StoredSessionModel;
-                sshClient = new SshClient(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, clientStoredSessionModel.PasswordDecryped);
+                
+                // Create SSH client based on authentication type
+                if (clientStoredSessionModel.AuthenticationType == AuthenticationType.PrivateKey)
+                {
+                    // Private key authentication
+                    var privateKeyContent = clientStoredSessionModel.PrivateKeyDecrypted;
+                    if (string.IsNullOrEmpty(privateKeyContent))
+                    {
+                        throw new Exception("Private key is empty");
+                    }
+
+                    PrivateKeyFile privateKeyFile;
+                    using (var stream = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(privateKeyContent)))
+                    {
+                        if (!string.IsNullOrEmpty(clientStoredSessionModel.PrivateKeyPassphraseDecrypted))
+                        {
+                            // Private key with passphrase
+                            privateKeyFile = new PrivateKeyFile(stream, clientStoredSessionModel.PrivateKeyPassphraseDecrypted);
+                        }
+                        else
+                        {
+                            // Private key without passphrase
+                            privateKeyFile = new PrivateKeyFile(stream);
+                        }
+                    }
+
+                    var keyAuth = new PrivateKeyAuthenticationMethod(clientStoredSessionModel.UserName, privateKeyFile);
+                    var connectionInfo = new ConnectionInfo(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, keyAuth);
+                    sshClient = new SshClient(connectionInfo);
+                }
+                else
+                {
+                    // Password authentication (default)
+                    sshClient = new SshClient(clientStoredSessionModel.Host, clientStoredSessionModel.Port, clientStoredSessionModel.UserName, clientStoredSessionModel.PasswordDecryped);
+                }
+                
                 sshClient.Connect();
                 var outputQueue = new ConcurrentQueue<string>();
 

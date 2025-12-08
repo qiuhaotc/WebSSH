@@ -73,7 +73,16 @@
                         <p>Host: @storedSession.Host</p>
                         <p>Port: @storedSession.Port</p>
                         <p>User Name: @storedSession.UserName</p>
-                        <p>Password: @(string.IsNullOrEmpty(storedSession.Password) ? string.Empty : "**********")</p>
+                        <p>Auth Type: @storedSession.AuthenticationType</p>
+                        @if (storedSession.AuthenticationType == AuthenticationType.Password)
+                        {
+                            <p>Password: @(string.IsNullOrEmpty(storedSession.Password) ? string.Empty : "**********")</p>
+                        }
+                        else
+                        {
+                            <p>Private Key: @(string.IsNullOrEmpty(storedSession.PrivateKey) ? string.Empty : "Configured")</p>
+                            <p>Key Passphrase: @(string.IsNullOrEmpty(storedSession.PrivateKeyPassphrase) ? "No" : "Yes")</p>
+                        }
                         <button class="btn btn-primary btn-sm" @onclick="() => GoToConnected(storedSession)">Connected</button>
                         <button class="btn btn-info btn-sm" @onclick="u => EditStoredSession(storedSession)">Edit</button>
                         <button class="btn btn-warning btn-sm" @onclick="u => CopySession(storedSession)">Copy</button>
@@ -118,11 +127,34 @@
         <label for="ServerUserName">User Name</label>
         <input type="text" class="form-control" id="ServerUserName" autocomplete="off" @bind-value="@ClientStoredSessionModelForEditOrAdd.UserName">
     </div>
-    <div class="form-group  col-md-6">
-        <label for="ServerPassword">Password</label>
-        <input type="password" class="form-control" id="ServerPassword" autocomplete="new-password" @bind-value="@ClientStoredSessionModelForEditOrAdd.PasswordDecryped">
-        <small id="PasswordHelp" class="form-text text-muted">The password will saved as base64 encoding on your local browser</small>
+    <div class="form-group col-md-6">
+        <label for="AuthType">Authentication Type</label>
+        <select class="form-control" id="AuthType" @bind="@ClientStoredSessionModelForEditOrAdd.AuthenticationType">
+            <option value="@AuthenticationType.Password">Password</option>
+            <option value="@AuthenticationType.PrivateKey">Private Key</option>
+        </select>
     </div>
+    @if (ClientStoredSessionModelForEditOrAdd.AuthenticationType == AuthenticationType.Password)
+    {
+        <div class="form-group col-md-12">
+            <label for="ServerPassword">Password</label>
+            <input type="password" class="form-control" id="ServerPassword" autocomplete="new-password" @bind-value="@ClientStoredSessionModelForEditOrAdd.PasswordDecryped">
+            <small id="PasswordHelp" class="form-text text-muted">The password will saved as base64 encoding on your local browser</small>
+        </div>
+    }
+    else
+    {
+        <div class="form-group col-md-12">
+            <label for="PrivateKey">Private Key</label>
+            <textarea class="form-control" id="PrivateKey" rows="8" placeholder="Paste your private key here (e.g., -----BEGIN RSA PRIVATE KEY-----)" @bind="@ClientStoredSessionModelForEditOrAdd.PrivateKeyDecrypted"></textarea>
+            <small id="PrivateKeyHelp" class="form-text text-muted">The private key will be saved as base64 encoding on your local browser. Supports RSA, DSA, ECDSA, and ED25519 keys.</small>
+        </div>
+        <div class="form-group col-md-12">
+            <label for="PrivateKeyPassphrase">Private Key Passphrase (Optional)</label>
+            <input type="password" class="form-control" id="PrivateKeyPassphrase" autocomplete="new-password" placeholder="Leave empty if key has no passphrase" @bind-value="@ClientStoredSessionModelForEditOrAdd.PrivateKeyPassphraseDecrypted">
+            <small id="PassphraseHelp" class="form-text text-muted">Only required if your private key is encrypted with a passphrase</small>
+        </div>
+    }
 </div>
 
 @code {

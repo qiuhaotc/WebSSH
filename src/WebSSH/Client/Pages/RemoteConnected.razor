@@ -19,9 +19,30 @@
         <input type="text" class="form-control" id="ServerUserName" autocomplete="off" @bind-value="@ClientStoredSessionModel.UserName">
     </div>
     <div class="form-group">
-        <label for="ServerPassword">Password</label>
-        <input type="password" class="form-control" id="ServerPassword" autocomplete="new-password" @bind-value="@ClientStoredSessionModel.PasswordDecryped">
+        <label for="AuthType">Authentication Type</label>
+        <select class="form-control" id="AuthType" @bind="@ClientStoredSessionModel.AuthenticationType">
+            <option value="@AuthenticationType.Password">Password</option>
+            <option value="@AuthenticationType.PrivateKey">Private Key</option>
+        </select>
     </div>
+    @if (ClientStoredSessionModel.AuthenticationType == AuthenticationType.Password)
+    {
+        <div class="form-group">
+            <label for="ServerPassword">Password</label>
+            <input type="password" class="form-control" id="ServerPassword" autocomplete="new-password" @bind-value="@ClientStoredSessionModel.PasswordDecryped">
+        </div>
+    }
+    else
+    {
+        <div class="form-group">
+            <label for="PrivateKey">Private Key</label>
+            <textarea class="form-control" id="PrivateKey" rows="8" placeholder="Paste your private key here" @bind="@ClientStoredSessionModel.PrivateKeyDecrypted"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="PrivateKeyPassphrase">Private Key Passphrase (Optional)</label>
+            <input type="password" class="form-control" id="PrivateKeyPassphrase" autocomplete="new-password" placeholder="Leave empty if key has no passphrase" @bind-value="@ClientStoredSessionModel.PrivateKeyPassphraseDecrypted">
+        </div>
+    }
     @if (!string.IsNullOrEmpty(Status))
     {
         <div class="alert alert-danger" role="alert">

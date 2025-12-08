@@ -14,6 +14,9 @@ namespace WebSSH.Shared
         public string Password { get; set; }
         public byte[] FingerPrint { get; set; }
         public byte[] LoginKey { get; set; }
+        public AuthenticationType AuthenticationType { get; set; } = AuthenticationType.Password;
+        public string PrivateKey { get; set; }
+        public string PrivateKeyPassphrase { get; set; }
 
         [JsonIgnore]
         public string PasswordDecryped
@@ -46,6 +49,68 @@ namespace WebSSH.Shared
             }
         }
 
+        [JsonIgnore]
+        public string PrivateKeyDecrypted
+        {
+            get
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(PrivateKey))
+                    {
+                        return Encoding.UTF8.GetString(Convert.FromBase64String(PrivateKey));
+                    }
+                }
+                catch
+                {
+                }
+
+                return string.Empty;
+            }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    PrivateKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+                }
+                else
+                {
+                    PrivateKey = string.Empty;
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public string PrivateKeyPassphraseDecrypted
+        {
+            get
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(PrivateKeyPassphrase))
+                    {
+                        return Encoding.UTF8.GetString(Convert.FromBase64String(PrivateKeyPassphrase));
+                    }
+                }
+                catch
+                {
+                }
+
+                return string.Empty;
+            }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    PrivateKeyPassphrase = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+                }
+                else
+                {
+                    PrivateKeyPassphrase = string.Empty;
+                }
+            }
+        }
+
         public ClientStoredSessionModel Clone(bool sameKey = true)
         {
             return new()
@@ -58,6 +123,9 @@ namespace WebSSH.Shared
                 Password = Password,
                 FingerPrint = FingerPrint,
                 LoginKey = LoginKey,
+                AuthenticationType = AuthenticationType,
+                PrivateKey = PrivateKey,
+                PrivateKeyPassphrase = PrivateKeyPassphrase,
             };
         }
     }
