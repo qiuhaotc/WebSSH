@@ -25,7 +25,7 @@ namespace WebSSH.Server
                     var privateKeyContent = clientStoredSessionModel.PrivateKeyDecrypted;
                     if (string.IsNullOrEmpty(privateKeyContent))
                     {
-                        throw new Exception("Private key is empty");
+                        throw new ArgumentException("Private key content is required for private key authentication", nameof(clientStoredSessionModel));
                     }
 
                     // Create PrivateKeyFile from the key content
