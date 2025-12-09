@@ -18,7 +18,19 @@ Input the user name and password and captcha to login, user name and password co
 
 ### Management Connection
 
-![Mangement Connection](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Management.png)
+![Mangement Connection](docs/Management.png)
+
+### Private Key Authentication
+
+WebSSH now supports SSH private key authentication in addition to traditional password authentication:
+
+- **Multiple Authentication Types**: Choose between password or private key authentication for each stored session
+- **Encrypted Key Support**: Supports private keys protected with a passphrase
+- **Multiple Key Formats**: Compatible with RSA, DSA, ECDSA, and ED25519 key types
+- **Secure Storage**: Private keys are stored as base64-encoded strings in your browser's local storage
+- **Backward Compatible**: Existing password-based sessions continue to work without any changes
+
+For detailed usage instructions, see the [Private Key Authentication documentation](docs/private-key-authentication.md).
 
 ### Connected To Server, Running Command
 
@@ -26,7 +38,9 @@ Press the Connect button, connect to the remote server, then run whatever comman
 
 Go to management page, will list all available connected servers.
 
-![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
+![Connected & Running Command 1](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
+
+![Connected & Running Command 2](docs/Shell.gif)
 
 ## Real-time (SignalR) Enhancements
 
