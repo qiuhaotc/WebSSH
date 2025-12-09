@@ -18,7 +18,7 @@ Input the user name and password and captcha to login, user name and password co
 
 ### Management Connection
 
-![Mangement Connection](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Management.png)
+![Mangement Connection](docs/Management.png)
 
 ### Private Key Authentication
 
@@ -38,7 +38,9 @@ Press the Connect button, connect to the remote server, then run whatever comman
 
 Go to management page, will list all available connected servers.
 
-![Connected & Running Command](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
+![Connected & Running Command 1](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
+
+![Connected & Running Command 2](docs/Shell.gif)
 
 ## Real-time (SignalR) Enhancements
 

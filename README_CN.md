@@ -18,7 +18,7 @@ WebSSH 让你可以随时随地通过浏览器 SSH 到远程主机。
 
 ### 管理连接
 
-![管理连接](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Management.png)
+![管理连接](docs/Management.png)
 
 ### 密钥认证
 
@@ -38,7 +38,9 @@ WebSSH 支持使用 SSH 私钥进行身份验证，除了传统的密码认证�
 
 回到管理页面可以看到所有当前仍保持连接的会话。
 
-![连接与运行命令](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
+![连接与运行命令 1](https://raw.githubusercontent.com/qiuhaotc/WebSSH/master/docs/Interface.png)
+
+![连接与运行命令 2](docs/Shell.gif)
 
 ## 实时特性（SignalR 改造）
 
