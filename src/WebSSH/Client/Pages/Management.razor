@@ -146,7 +146,20 @@
     {
         <div class="form-group col-md-12">
             <label for="PrivateKey">Private Key</label>
-            <textarea class="form-control" id="PrivateKey" rows="8" placeholder="Paste your private key here (e.g., -----BEGIN RSA PRIVATE KEY-----)" @bind="@ClientStoredSessionModelForEditOrAdd.PrivateKeyDecrypted"></textarea>
+            @if (showPrivateKey || string.IsNullOrEmpty(ClientStoredSessionModelForEditOrAdd.PrivateKey))
+            {
+                <textarea class="form-control" id="PrivateKey" rows="8" placeholder="Paste your private key here (e.g., -----BEGIN RSA PRIVATE KEY-----)" @bind="@ClientStoredSessionModelForEditOrAdd.PrivateKeyDecrypted"></textarea>
+            }
+            else
+            {
+                <input type="password" class="form-control" id="PrivateKey" value="**********" readonly>
+            }
+            @if (!string.IsNullOrEmpty(ClientStoredSessionModelForEditOrAdd.PrivateKey))
+            {
+                <button type="button" class="btn btn-sm btn-link" @onclick="() => showPrivateKey = !showPrivateKey">
+                    @(showPrivateKey ? "Hide" : "Show/Edit") Private Key
+                </button>
+            }
             <small id="PrivateKeyHelp" class="form-text text-muted">The private key will be saved as base64 encoding on your local browser. Supports RSA, DSA, ECDSA, and ED25519 keys.</small>
         </div>
         <div class="form-group col-md-12">
@@ -161,6 +174,7 @@
 
     public string Status { get; set; }
     public string ImportExportStatus { get; set; }
+    private bool showPrivateKey = false;
 
     ClientStoredSessionModel ClientStoredSessionModelForEditOrAdd { get; set; } = new();
 
@@ -210,12 +224,14 @@
     {
         ClientStoredSessionsModel.AddOrUpdateStoredSessions(ClientStoredSessionModelForEditOrAdd);
         ClientStoredSessionModelForEditOrAdd = new ClientStoredSessionModel();
+        showPrivateKey = false;
         await LocalStorage.SetItemAsync<ClientStoredSessionsModel>(nameof(ClientStoredSessionsModel), ClientStoredSessionsModel);
     }
 
     void EditStoredSession(ClientStoredSessionModel clientStoredSessionModel)
     {
         ClientStoredSessionModelForEditOrAdd = clientStoredSessionModel;
+        showPrivateKey = false;
     }
 
     async void SaveChanges()
