@@ -25,7 +25,7 @@ jobs:
         run: dotnet build src\WebSSH\Server\WebSSH.Server.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish src\WebSSH\Server\WebSSH.Server.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish src\WebSSH\Server\WebSSH.Server.csproj -c Release -o ${{env.DOTNET_ROOT}}\myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
