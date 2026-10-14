@@ -4,10 +4,6 @@ English | [中文](README_CN.md)
 
 WebSSH allows you to SSH to your remote host anytime, anywhere.
 
-## Demonstrate Site
-
-Check <https://webssh.azurewebsites.net>, you can use any login name and password to logged in.
-
 ## Usage
 
 ### Login
